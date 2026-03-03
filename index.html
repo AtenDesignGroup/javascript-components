@@ -191,8 +191,25 @@
       <pre>
 // Initialize all accordions on the page
 document.querySelectorAll('.accordion').forEach(accordion => {
-    new Accordion(accordion, {options});
+  const accordionComponent = new Accordion(accordion, {options});
+  accordionComponent.init();
 });
+      </pre>
+    </div>
+
+    <h3>Custom Options Example</h3>
+    <div class="code-example">
+      <pre>
+const accordionComponent = new Accordion(accordionElement, {
+  selectors: {
+    trigger: '.my-accordion__trigger[aria-controls]',
+  },
+  classes: {
+    expanded: 'is-open',
+  },
+});
+
+accordionComponent.init();
       </pre>
     </div>
   </section>
@@ -343,8 +360,28 @@ document.querySelectorAll('.accordion').forEach(accordion => {
       <pre>
 // Initialize all Tab Content elements on the page
 document.querySelectorAll('.tab-content').forEach((tabContent) => {
-    new TabContent(tabContent, {options});
+  const tabContentComponent = new TabContent(tabContent, {options});
+  tabContentComponent.init();
 });
+      </pre>
+    </div>
+
+    <h3>Custom Options Example</h3>
+    <div class="code-example">
+      <pre>
+const tabContentComponent = new TabContent(tabContentElement, {
+  selectors: {
+    navigation: '.my-tabs__navigation',
+    group: '.my-tabs__group',
+    trigger: '.my-tabs__trigger',
+  },
+  classes: {
+    expanded: 'is-open',
+  },
+  breakpoint: 1024,
+});
+
+tabContentComponent.init();
       </pre>
     </div>
   </section>
@@ -354,20 +391,27 @@ document.querySelectorAll('.tab-content').forEach((tabContent) => {
   <p>&copy; 2026 Aten Javascript Components. All rights reserved.</p>
 </footer>
 
-<script type="module">
-  import { Accordion } from './src/components/Accordion.js';
-  import { TabContent } from './src/components/TabContent.js';
-
+<script src="./dist/javascript-components.umd.js"></script>
+<script>
   // Initialize components after the DOM is fully loaded
   document.addEventListener('DOMContentLoaded', function() {
+    const { Accordion, TabContent } = window.JavaScriptComponents || {};
+
+    if (!Accordion || !TabContent) {
+      console.error('JavaScriptComponents bundle not available. Run "npm run build" to generate ./dist files.');
+      return;
+    }
+
     // Initialize accordions
     document.querySelectorAll('.accordion').forEach(accordion => {
-      new Accordion(accordion);
+      const accordionComponent = new Accordion(accordion);
+      accordionComponent.init();
     });
 
     document.querySelectorAll('.tab-content').forEach(tabContent => {
-      new TabContent(tabContent);
-    })
+      const tabContentComponent = new TabContent(tabContent);
+      tabContentComponent.init();
+    });
   });
 </script>
 </body>

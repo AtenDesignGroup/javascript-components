@@ -23,7 +23,6 @@ export class Accordion {
     this.element = element;
     this.trigger = this.element.querySelector(this.options.selectors.trigger);
     this.panel = this.element.querySelector(`#${Accordion.getControlledByID(this.trigger)}`);
-    this.init();
   }
 
   /**

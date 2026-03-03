@@ -58,7 +58,8 @@ import { Accordion } from '@atendesign/javascript-components';
 
 document.addEventListener('DOMContentLoaded', function() { 
     document.querySelectorAll('.accordion').forEach(accordion => {
-        new Accordion(accordion, {options});
+        const accordionComponent = new Accordion(accordion, {options});
+        accordionComponent.init();
     });
 });
 
@@ -68,9 +69,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
 | Option | Type | Default                                | Description |
 |--------|------|----------------------------------------|-------------|
-| `triggerSelector` | string | `'.accordion__trigger[aria-controls]'` | CSS selector for accordion trigger buttons |
-| `contentSelector` | string | `'.accordion__content'`                | CSS selector for accordion content panels |
-| `expandedClass` | string | `'is-expanded'`                        | CSS class applied to expanded trigger buttons |
+| `selectors.trigger` | string | `'.accordion__trigger[aria-controls]'` | CSS selector for accordion trigger buttons |
+| `classes.expanded` | string | `'is-expanded'`                        | CSS class applied to expanded accordion state |
+
+### Custom Options Example
+
+```javascript
+const accordionComponent = new Accordion(accordionElement, {
+    selectors: {
+        trigger: '.my-accordion__trigger[aria-controls]',
+    },
+    classes: {
+        expanded: 'is-open',
+    },
+});
+
+accordionComponent.init();
+```
 
 ### Required HTML Attributes
 
@@ -132,7 +147,8 @@ import { TabContent } from '@atendesign/javascript-components';
 
 document.addEventListener('DOMContentLoaded', function() { 
     document.querySelectorAll('.tab-content').forEach(tabContent => {
-        new TabContent(tabContent);
+        const tabContentComponent = new TabContent(tabContent);
+        tabContentComponent.init();
     });
 });
 ```
@@ -141,11 +157,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
 | Option               | Type    | Default                      | Description                                         |
 |----------------------|---------|------------------------------|-----------------------------------------------------|
-| `navigationSelector` | string  | `'.tab-content__navigation'` | CSS selector for desktop navigation                 |
-| `groupSelector`      | string  | `'.tab-content__group'`      | CSS selector for tab groups                         |
-| `triggerSelector`      | string  | `'.tab-content__trigger'`    | CSS selector for tab buttons                        |
-| `expandedClass`    | string  | `is-expanded`                | CSS selector for showing expanded groups            |
-| `breakpoint`        | integer | `768`                        | Media breakpoint at which tabs switch to accordions |
+| `selectors.navigation` | string  | `'.tab-content__navigation'` | CSS selector for desktop tab navigation container   |
+| `selectors.group`      | string  | `'.tab-content__group'`      | CSS selector for tab groups                         |
+| `selectors.trigger`    | string  | `'.tab-content__trigger'`    | CSS selector for tab trigger buttons                |
+| `classes.expanded`     | string  | `'is-expanded'`              | CSS class applied to expanded tabs/groups           |
+| `breakpoint`           | number  | `768`                        | Media breakpoint where tabs switch to accordions    |
+
+### Custom Options Example
+
+```javascript
+const tabContentComponent = new TabContent(tabContentElement, {
+    selectors: {
+        navigation: '.my-tabs__navigation',
+        group: '.my-tabs__group',
+        trigger: '.my-tabs__trigger',
+    },
+    classes: {
+        expanded: 'is-open',
+    },
+    breakpoint: 1024,
+});
+
+tabContentComponent.init();
+```
 
 ### Required HTML Attributes
 
