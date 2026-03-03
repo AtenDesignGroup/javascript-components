@@ -1,6 +1,6 @@
 # Aten Design Group -- JavaScript Components
 
-[![npm version](https://badge.fury.io/js/%40AtenDesignGroup%2Fjavascript-components.svg)](https://badge.fury.io/js/%40AtenDesignGroup%2Fjavascript-components)
+[![npm version](https://badge.fury.io/js/%40atendesign%2Fjavascript-components.svg)](https://badge.fury.io/js/%40atendesign%2Fjavascript-components)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A collection of JavaScript libraries that adhere ceremoniously with WCAG guidelines. This package provides accessible, keyboard-navigable UI components with full ARIA support and responsive design capabilities.
@@ -21,7 +21,7 @@ Found a bug or have a feature request? Please [open an issue](https://github.com
 
 ## Installation
 
-`npm install @AtenDesignGroup/javascript-components`
+`npm install @atendesign/javascript-components`
 
 ## Accordion
 
@@ -54,7 +54,7 @@ Found a bug or have a feature request? Please [open an issue](https://github.com
 **JavaScript**
 
 ```
-import { Accordion } from '@AtenDesignGroup/javascript-components';
+import { Accordion } from '@atendesign/javascript-components';
 
 document.addEventListener('DOMContentLoaded', function() { 
     document.querySelectorAll('.accordion').forEach(accordion => {
@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function() {
 **JavaScript**
 
 ```
-import { TabContent } from '@AtenDesignGroup/javascript-components';
+import { TabContent } from '@atendesign/javascript-components';
 
 document.addEventListener('DOMContentLoaded', function() { 
     document.querySelectorAll('.tab-content').forEach(tabContent => {
