@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FED Tools Components</title>
+  <style>
+    :root {
+      --fed-tools-clr-gray-100: #F5F5F5;
+      --fed-tools-clr-gray-200: #EEE;
+      --fed-tools-clr-gray-300: #DDD;
+      --fed-tools-clr-gray-800: #333;
+    }
+
+    body {
+      color: var(--fed-tools-clr-gray-800);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      border-bottom: 1px solid var(--fed-tools-clr-gray-200);
+      margin-bottom: 40px;
+      padding-bottom: 20px;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+    h2 {
+      border-bottom: 1px solid var(--fed-tools-clr-gray-200);
+      font-size: 1.8rem;
+      margin-top: 40px;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+    }
+    section {
+      margin-bottom: 50px;
+    }
+    .code-example {
+      background-color: var(--fed-tools-clr-gray-100);
+      border: 1px solid var(--fed-tools-clr-gray-300);
+      border-radius: 4px;
+      font-family: monospace;
+      overflow-x: auto;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    .accordion__trigger,
+    .tab-content__trigger {
+      align-items: center;
+      background-color: var(--fed-tools-clr-gray-100);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      font-size: 1rem;
+      font-weight: bold;
+      justify-content: space-between;
+      padding: 15px;
+      text-align: left;
+      width: 100%;
+    }
+    .accordion__trigger::after {
+      content: "+";
+      font-size: 1.2rem;
+    }
+    .accordion__trigger.is-expanded::after {
+      content: "-";
+    }
+    .accordion__content {
+      display: none;
+      padding: 15px;
+    }
+    .accordion__content.is-expanded {
+      display: block;
+    }
+    .accordion__content p {
+      margin: 0;
+    }
+    .tab-content__navigation {
+      display: flex;
+      gap: 10px;
+    }
+    .tab-content__group {
+      margin-top: 15px;
+    }
+    .tab-content__group .tab-content__content {
+      display: none;
+    }
+    .tab-content__group.is-expanded .tab-content__content {
+      display: block;
+    }
+    .tab-content__content {
+      padding: 15px;
+    }
+    .tab-content__content p {
+      margin: 0;
+    }
+    footer {}
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>JavaScript Components</h1>
+  <p>Examples of each component in the /components directory</p>
+</header>
+
+<main>
+  <section id="accordion">
+    <h2 id="accordion">Accordion</h2>
+    <p>An accessible accordion component that follows
+      <a href="https://www.w3.org/WAI/ARIA/apg/patterns/accordion/examples/accordion/" target="_blank">
+        WCAG guidelines
+      </a>.
+    </p>
+
+    <div class="accordion">
+      <h3 class="accordion__heading">
+        <button id="accordion-trigger-01"
+                class="accordion__trigger"
+                aria-expanded="false"
+                aria-controls="accordion-section-01">
+          Accordion Section 1
+        </button>
+      </h3>
+
+      <div id="accordion-section-01"
+           class="accordion__content"
+           role="region"
+           aria-labelledby="accordion-trigger-01">
+        <p>This is the content for section 1. The accordion component allows you to show and hide content in a collapsible panel.</p>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <h3 class="accordion__heading">
+        <button id="accordion-trigger-02"
+                class="accordion__trigger"
+                aria-expanded="false"
+                aria-controls="accordion-section-02">
+          Accordion Section 2
+        </button>
+      </h3>
+
+      <div id="accordion-section-02"
+           class="accordion__content"
+           role="region"
+           aria-labelledby="accordion-trigger-02">
+        <p>This is the content for section 2. When you click on the header, this content will toggle visibility.</p>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <h3 class="accordion__heading">
+        <button id="accordion-trigger-03"
+                class="accordion__trigger"
+                aria-expanded="false"
+                aria-controls="accordion-section-03">
+          Accordion Section 3
+        </button>
+      </h3>
+
+      <div id="accordion-section-03"
+           class="accordion__content"
+           role="region"
+           aria-labelledby="accordion-trigger-03">
+        <p>This is the content for section 3. The accordion is fully accessible and can be controlled via keyboard.</p>
+      </div>
+    </div>
+
+    <h3>HTML Structure</h3>
+    <div class="code-example">
+      <pre>
+&lt;div class="accordion"&gt;
+  &lt;h3 class="accordion__heading"&gt;
+    &lt;button id="accordion-trigger-01" class="accordion__trigger" aria-expanded="false" aria-controls="accordion-section-01"&gt;Accordion Section&lt;/button&gt;
+  &lt;/h3&gt;
+
+  &lt;div id="accordion-section-01" class="accordion__content" role="region" aria-labelledby="accordion-trigger-01"&gt;
+    &lt;p&gt;This is the accordion content.&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+      </pre>
+    </div>
+
+    <h3>JavaScript Initialization</h3>
+    <div class="code-example">
+      <pre>
+// Initialize all accordions on the page
+document.querySelectorAll('.accordion').forEach(accordion => {
+    new Accordion(accordion, {options});
+});
+      </pre>
+    </div>
+  </section>
+
+  <section id="tab-content">
+    <h2 id="tab-content">Tab Content</h2>
+    <p>An accessible tabbed content element that follows
+      <a href="https://www.w3.org/WAI/ARIA/apg/patterns/tabs/" target="_blank">
+        WCAG guidelines
+      </a>.
+    </p>
+
+    <div class="tab-content">
+      <div role="tablist" class="tab-content__navigation"></div>
+
+      <div id="tab-content-01"
+           class="tab-content__group is-expanded"
+           role="tabpanel"
+           aria-labelledby="tab-tab-content-01">
+        <button type="button"
+                id="tab-tab-content-01"
+                class="tab-content__trigger is-expanded"
+                role="tab"
+                aria-haspopup="true"
+                aria-selected="true"
+                aria-expanded="true"
+                aria-controls="tab-content-01">
+          Tab 01
+        </button>
+
+        <div class="tab-content__content">
+          <p>Text content goes here - Tab 01</p>
+        </div>
+      </div>
+
+      <div id="tab-content-02"
+           class="tab-content__group"
+           role="tabpanel"
+           aria-labelledby="tab-tab-content-02">
+        <button type="button"
+                id="tab-tab-content-02"
+                class="tab-content__trigger"
+                role="tab"
+                aria-haspopup="true"
+                aria-selected="true"
+                aria-expanded="true"
+                aria-controls="tab-content-02">
+          Tab 02
+        </button>
+
+        <div class="tab-content__content">
+          <p>Text content goes here - Tab 02</p>
+        </div>
+      </div>
+
+      <div id="tab-content-03"
+           class="tab-content__group is-expanded"
+           role="tabpanel"
+           aria-labelledby="tab-tab-content-03">
+        <button type="button"
+                id="tab-tab-content-03"
+                class="tab-content__trigger"
+                role="tab"
+                aria-haspopup="true"
+                aria-selected="true"
+                aria-expanded="true"
+                aria-controls="tab-content-03">
+          Tab 03
+        </button>
+
+        <div class="tab-content__content">
+          <p>Text content goes here - Tab 03</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>HTML Structure</h3>
+    <div class="code-example">
+      <pre>
+&lt;div class="tab-content"&gt;
+  &lt;div role="tablist" class="tab-content__navigation"&gt;&lt;/div&gt;
+
+  &lt;div id="tab-content-01"
+       class="tab-content__group is-expanded"
+       role="tabpanel"
+       aria-labelledby="tab-tab-content-01"&gt;
+    &lt;button type="button"
+            id="tab-tab-content-01"
+            class="tab-content__trigger is-expanded"
+            role="tab"
+            aria-haspopup="true"
+            aria-selected="true"
+            aria-expanded="true"
+            aria-controls="tab-content-01"&gt;
+      Tab 01
+    &lt;/button&gt;
+
+    &lt;div class="tab-content__content"&gt;
+      &lt;p&gt;Text content goes here - Tab 01&lt;/p&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div id="tab-content-02"
+       class="tab-content__group"
+       role="tabpanel"
+       aria-labelledby="tab-tab-content-02"&gt;
+    &lt;button type="button"
+            id="tab-tab-content-02"
+            class="tab-content__trigger"
+            role="tab"
+            aria-haspopup="true"
+            aria-selected="true"
+            aria-expanded="true"
+            aria-controls="tab-content-02"&gt;
+      Tab 02
+    &lt;/button&gt;
+
+    &lt;div class="tab-content__content"&gt;
+      &lt;p&gt;Text content goes here - Tab 02&lt;/p&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div id="tab-content-03"
+       class="tab-content__group is-expanded"
+       role="tabpanel"
+       aria-labelledby="tab-tab-content-03"&gt;
+    &lt;button type="button"
+            id="tab-tab-content-03"
+            class="tab-content__trigger"
+            role="tab"
+            aria-haspopup="true"
+            aria-selected="true"
+            aria-expanded="true"
+            aria-controls="tab-content-03"&gt;
+      Tab 03
+    &lt;/button&gt;
+
+    &lt;div class="tab-content__content"&gt;
+      &lt;p&gt;Text content goes here - Tab 03&lt;/p&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+      </pre>
+    </div>
+
+    <h3>JavaScript Initialization</h3>
+    <div class="code-example">
+      <pre>
+// Initialize all Tab Content elements on the page
+document.querySelectorAll('.tab-content').forEach((tabContent) => {
+    new TabContent(tabContent, {options});
+});
+      </pre>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>&copy; 2026 Aten Javascript Components. All rights reserved.</p>
+</footer>
+
+<script type="module">
+  import { Accordion } from './src/components/Accordion.js';
+  import { TabContent } from './src/components/TabContent.js';
+
+  // Initialize components after the DOM is fully loaded
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize accordions
+    document.querySelectorAll('.accordion').forEach(accordion => {
+      new Accordion(accordion);
+    });
+
+    document.querySelectorAll('.tab-content').forEach(tabContent => {
+      new TabContent(tabContent);
+    })
+  });
+</script>
+</body>
+</html>
