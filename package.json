@@ -2,6 +2,7 @@
   "name": "@atendesigngroup/javascript-components",
   "version": "1.0.0",
   "description": "A collection of JavaScript libraries that adhere ceremoniously with WCAG guidelines.",
+  "scope": "atendesigngroup",
   "main": "dist/javascript-components.umd.js",
   "module": "dist/javascript-components.esm.js",
   "type": "module",
