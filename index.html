@@ -98,6 +98,63 @@
     .tab-content__content p {
       margin: 0;
     }
+    /* Menu */
+    .menu {
+      position: relative;
+      display: inline-block;
+    }
+    .menu__items {
+      display: flex;
+      gap: 0;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .menu__item {
+      position: relative;
+    }
+    .menu__link,
+    .menu__dropdown-trigger {
+      background: none;
+      border: none;
+      color: var(--fed-tools-clr-gray-800);
+      cursor: pointer;
+      display: block;
+      font-size: 1rem;
+      padding: 10px 16px;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .menu__link:hover,
+    .menu__dropdown-trigger:hover,
+    .menu__dropdown-trigger.is-expanded {
+      background-color: var(--fed-tools-clr-gray-200);
+    }
+    .menu__dropdown-trigger::after {
+      content: " ▾";
+      font-size: 0.75rem;
+    }
+    .menu__dropdown {
+      background: white;
+      border: 1px solid var(--fed-tools-clr-gray-300);
+      border-radius: 4px;
+      display: none;
+      left: 0;
+      min-width: 180px;
+      position: absolute;
+      top: 100%;
+      z-index: 100;
+    }
+    .menu__dropdown-trigger[aria-expanded="true"] + .menu__dropdown {
+      display: block;
+    }
+    .menu__dropdown .menu__items {
+      flex-direction: column;
+    }
+    .menu__dropdown .menu__link {
+      display: block;
+      width: 100%;
+    }
     footer {}
   </style>
 </head>
@@ -385,6 +442,102 @@ tabContentComponent.init();
       </pre>
     </div>
   </section>
+
+  <section id="menu">
+    <h2 id="menu">Menu</h2>
+    <p>An accessible navigation menu component with dropdown support that follows
+      <a href="https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/examples/disclosure-navigation/" target="_blank">
+        WCAG guidelines
+      </a>.
+    </p>
+
+    <nav class="menu">
+      <ul class="menu__items">
+        <li class="menu__item">
+          <a class="menu__link" href="#">Home</a>
+        </li>
+        <li class="menu__item">
+          <button class="menu__dropdown-trigger" aria-expanded="false">About</button>
+          <div class="menu__dropdown">
+            <ul class="menu__items">
+              <li class="menu__item"><a class="menu__link" href="#">Our Team</a></li>
+              <li class="menu__item"><a class="menu__link" href="#">Our Story</a></li>
+              <li class="menu__item"><a class="menu__link" href="#">Careers</a></li>
+            </ul>
+          </div>
+        </li>
+        <li class="menu__item">
+          <a class="menu__link" href="#">Services</a>
+        </li>
+        <li class="menu__item">
+          <button class="menu__dropdown-trigger" aria-expanded="false">Contact</button>
+          <div class="menu__dropdown">
+            <ul class="menu__items">
+              <li class="menu__item"><a class="menu__link" href="#">Email Us</a></li>
+              <li class="menu__item"><a class="menu__link" href="#">Call Us</a></li>
+            </ul>
+          </div>
+        </li>
+      </ul>
+    </nav>
+
+    <h3>HTML Structure</h3>
+    <div class="code-example">
+      <pre>
+&lt;nav class="menu"&gt;
+  &lt;ul class="menu__items"&gt;
+    &lt;li class="menu__item"&gt;
+      &lt;a class="menu__link" href="#"&gt;Home&lt;/a&gt;
+    &lt;/li&gt;
+    &lt;li class="menu__item"&gt;
+      &lt;button class="menu__dropdown-trigger" aria-expanded="false"&gt;About&lt;/button&gt;
+      &lt;div class="menu__dropdown"&gt;
+        &lt;ul class="menu__items"&gt;
+          &lt;li class="menu__item"&gt;&lt;a class="menu__link" href="#"&gt;Our Team&lt;/a&gt;&lt;/li&gt;
+          &lt;li class="menu__item"&gt;&lt;a class="menu__link" href="#"&gt;Our Story&lt;/a&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+      &lt;/div&gt;
+    &lt;/li&gt;
+    &lt;li class="menu__item"&gt;
+      &lt;a class="menu__link" href="#"&gt;Services&lt;/a&gt;
+    &lt;/li&gt;
+  &lt;/ul&gt;
+&lt;/nav&gt;
+      </pre>
+    </div>
+
+    <h3>JavaScript Initialization</h3>
+    <div class="code-example">
+      <pre>
+// Initialize all menus on the page
+document.querySelectorAll('.menu').forEach(menu => {
+  const menuComponent = new Menu(menu);
+  menuComponent.mount();
+});
+      </pre>
+    </div>
+
+    <h3>Custom Options Example</h3>
+    <div class="code-example">
+      <pre>
+const menuComponent = new Menu(menuElement, {
+  selectors: {
+    trigger: '.my-menu__dropdown-trigger',
+    items: '.my-menu__items',
+    item: '.my-menu__item',
+    link: '.my-menu__link',
+    dropdown: '.my-menu__dropdown',
+  },
+  classes: {
+    expanded: 'is-open',
+  },
+  breakpoint: 1024,
+});
+
+menuComponent.mount();
+      </pre>
+    </div>
+  </section>
 </main>
 
 <footer>
@@ -395,9 +548,9 @@ tabContentComponent.init();
 <script>
   // Initialize components after the DOM is fully loaded
   document.addEventListener('DOMContentLoaded', function() {
-    const { Accordion, TabContent } = window.JavaScriptComponents || {};
+    const { Accordion, Menu, TabContent } = window.JavaScriptComponents || {};
 
-    if (!Accordion || !TabContent) {
+    if (!Accordion || !Menu || !TabContent) {
       console.error('JavaScriptComponents bundle not available. Run "npm run build" to generate ./dist files.');
       return;
     }
@@ -411,6 +564,12 @@ tabContentComponent.init();
     document.querySelectorAll('.tab-content').forEach(tabContent => {
       const tabContentComponent = new TabContent(tabContent);
       tabContentComponent.init();
+    });
+
+    // Initialize menus
+    document.querySelectorAll('.menu').forEach(menu => {
+      const menuComponent = new Menu(menu);
+      menuComponent.mount();
     });
   });
 </script>
