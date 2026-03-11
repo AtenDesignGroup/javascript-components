@@ -17,6 +17,7 @@ Found a bug or have a feature request? Please [open an issue](https://github.com
 01. [Installation](#installation)
 02. [Accordion](#accordion)
 03. [Tab Content](#tab-content)
+04. [Menu](#menu)
 ---
 
 ## Installation
@@ -199,3 +200,114 @@ tabContentComponent.init();
 - `End`: Move to last tab
 - `Enter` or `Space`: Activate focused tab
 - Mouse click: Activate tab
+
+## Menu
+
+### Features
+
+- 🌟 Fully accessible implementation
+- ⌨️ Keyboard navigation support
+- 📱 Responsive design (desktop/mobile state)
+- 🎨 Customizable styling
+- 🔄 Submenu expand/collapse management
+- 🖱️ Click-outside to close
+
+### Basic Usage
+
+**HTML**
+
+```html
+<nav class="menu">
+  <ul class="menu__items">
+    <li class="menu__item">
+      <a class="menu__link" href="#">Home</a>
+    </li>
+    <li class="menu__item">
+      <button class="menu__dropdown-trigger" aria-expanded="false">About</button>
+      <div class="menu__dropdown">
+        <ul class="menu__items">
+          <li class="menu__item">
+            <a class="menu__link" href="#">Our Team</a>
+          </li>
+          <li class="menu__item">
+            <a class="menu__link" href="#">Our Story</a>
+          </li>
+        </ul>
+      </div>
+    </li>
+    <li class="menu__item">
+      <a class="menu__link" href="#">Services</a>
+    </li>
+  </ul>
+</nav>
+```
+
+**JavaScript**
+
+```javascript
+import { Menu } from '@atendesign/javascript-components';
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.menu').forEach(menu => {
+        const menuComponent = new Menu(menu);
+        menuComponent.mount();
+    });
+});
+```
+
+### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `selectors.trigger` | string | `'.menu__dropdown-trigger'` | CSS selector for dropdown trigger buttons |
+| `selectors.items` | string | `'.menu__items'` | CSS selector for the menu items container |
+| `selectors.item` | string | `'.menu__item'` | CSS selector for individual menu items |
+| `selectors.link` | string | `'.menu__link'` | CSS selector for menu item links |
+| `selectors.dropdown` | string | `'.menu__dropdown'` | CSS selector for dropdown containers |
+| `classes.expanded` | string | `'is-expanded'` | CSS class applied to expanded dropdown state |
+| `breakpoint` | number | `768` | Viewport width (px) at which the menu switches between mobile and desktop behaviour |
+
+### Custom Options Example
+
+```javascript
+const menuComponent = new Menu(menuElement, {
+    selectors: {
+        trigger: '.my-menu__dropdown-trigger',
+        items: '.my-menu__items',
+        item: '.my-menu__item',
+        link: '.my-menu__link',
+        dropdown: '.my-menu__dropdown',
+    },
+    classes: {
+        expanded: 'is-open',
+    },
+    breakpoint: 1024,
+});
+
+menuComponent.mount();
+```
+
+### Required HTML Attributes
+
+- `aria-expanded` on dropdown trigger buttons (automatically managed by the component)
+
+### Keyboard Support
+
+| Key | Action |
+|-----|--------|
+| `Enter` or `Space` | Expand focused submenu and move focus to its first item |
+| `Arrow Down` | Expand submenu (focus first item) or move to the next sibling item |
+| `Arrow Up` | Expand submenu (focus last item) or move to the previous sibling item |
+| `Arrow Right` | When inside a submenu, collapse it and move focus to the next top-level item |
+| `Arrow Left` | When inside a submenu, collapse it and move focus to the previous top-level item |
+| `Escape` | Collapse the open submenu and return focus to its trigger |
+| `Home` | Close all submenus and focus the first top-level menu item |
+| `End` | Close all submenus and focus the last top-level menu item |
+| Mouse click | Toggle submenu / close all when clicking outside the menu |
+
+### Lifecycle Methods
+
+| Method | Description |
+|--------|-------------|
+| `mount()` | Attaches all event listeners and initialises the responsive media query |
+| `destroy()` | Removes all event listeners and cleans up the component |
