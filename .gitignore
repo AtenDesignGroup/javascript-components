@@ -2,7 +2,7 @@
 node_modules/
 
 # Build outputs
-dist/
+# dist/
 
 # Logs
 npm-debug.log*
@@ -73,7 +73,7 @@ jspm_packages/
 
 # Nuxt.js build / generate output
 .nuxt
-dist
+# dist
 
 # Gatsby files
 .cache/
