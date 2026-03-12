@@ -1,9 +1,15 @@
 /**
  * @file
  * Components - Tab Content
- * Functionality for an Accordion or group of Accordions using accessible methods as described by WCAG: https://www.w3.org/WAI/ARIA/apg/patterns/tabs
+ * Functionality for a Tab Content component using accessible methods as described by WCAG: https://www.w3.org/WAI/ARIA/apg/patterns/tabs
  */
 
+/**
+ * Represents a Tab Content component with event handling and state management
+ * for tab navigation. On desktop viewports the triggers are collected into a
+ * navigation bar; on mobile they revert to an accordion-style layout within
+ * each content group.
+ */
 export class TabContent {
   constructor(element, options = {}) {
     // Default options
@@ -19,8 +25,13 @@ export class TabContent {
       breakpoint: 768,
     };
 
-    // Merge default options with user-provided options
-    this.options = {...defaultOptions, ...options};
+    // Deep merge for nested options
+    this.options = {
+      ...defaultOptions,
+      ...options,
+      selectors: { ...defaultOptions.selectors, ...(options.selectors ?? {}) },
+      classes:   { ...defaultOptions.classes,   ...(options.classes   ?? {}) },
+    };
 
     this.element = element;
     this.expandedClass = this.options.classes.expanded;
@@ -29,59 +40,54 @@ export class TabContent {
     this.triggers = this.element.querySelectorAll(this.options.selectors.trigger);
     this.mediaQuery = null;
     this.state = null;
+
+    // Store bound handler references for cleanup
+    this._onTriggerClick     = this.onTriggerClick.bind(this);
+    this._onTriggerKeydown   = this.onTriggerKeydown.bind(this);
+    this._onMediaQueryChange = this.onMediaQueryChange.bind(this);
   }
 
+  // LIFECYCLE
 
   /**
-   * Initializes the tab content component by setting up DOM element references
-   * and attaching necessary event listeners for interaction.
+   * Initializes the tab content component by attaching event listeners to each
+   * trigger and setting up the responsive media query. Exits early per-trigger
+   * if no triggers are found.
    *
    * @return {void} Does not return any value.
    */
   init() {
     this.triggers.forEach((trigger) => {
-      trigger.addEventListener('click', this.onTriggerClick.bind(this));
-      trigger.addEventListener('keydown', this.onTriggerKeydown.bind(this));
+      trigger.addEventListener('click', this._onTriggerClick);
+      trigger.addEventListener('keydown', this._onTriggerKeydown);
     });
 
     // Device or viewport change listener and on load.
     this.mediaQuery = window.matchMedia(`(min-width: ${this.options.breakpoint}px)`);
-    this.mediaQuery.addEventListener('change', this.onMediaQueryChange.bind(this));
-    this.onMediaQueryChange();
+    this.mediaQuery.addEventListener('change', this._onMediaQueryChange);
+    this._onMediaQueryChange();
   }
 
   /**
-   * Handles the 'change' event for a media query.
+   * Removes all event listeners attached by `init()`, cleaning up the instance
+   * so it can be safely discarded or re-initialized.
    *
-   * This function is triggered when the media query's evaluated result changes, such as when the viewport width crosses a specified breakpoint.
-   * It updates the component's state and adjusts the UI accordingly to ensure that the tab content behaves correctly in both desktop and mobile views.
-    *
    * @return {void} Does not return any value.
    */
-  onMediaQueryChange() {
-    if (this.mediaQuery.matches) {
-      this.state = 'desktop';
-
-      this.triggers.forEach((trigger, index) => {
-        this.navigation.append(trigger);
-
-        if (index !== 0) {
-          this.collapseTrigger(trigger);
-          this.groups[index].classList.remove(this.expandedClass);
-        } else {
-          this.expandTrigger(trigger);
-          this.groups[0].classList.add(this.expandedClass);
-        }
-      });
-    } else {
-      this.state = 'mobile';
-
-      this.triggers.forEach((trigger, index) => {
-        this.groups[index].prepend(trigger);
-        trigger.removeAttribute('tabindex');
+  destroy() {
+    if (this.triggers) {
+      this.triggers.forEach((trigger) => {
+        trigger.removeEventListener('click', this._onTriggerClick);
+        trigger.removeEventListener('keydown', this._onTriggerKeydown);
       });
     }
+
+    if (this.mediaQuery) {
+      this.mediaQuery.removeEventListener('change', this._onMediaQueryChange);
+    }
   }
+
+  // STATE
 
   /**
    * Collapses the specified trigger element, updating its ARIA attributes and CSS classes.
@@ -115,13 +121,44 @@ export class TabContent {
     }
   }
 
+  // EVENT HANDLERS
+
   /**
-   * Handles the 'click' event for a trigger element.
+   * Handles changes in media query state and repositions triggers between the
+   * navigation bar (desktop) and their individual content groups (mobile).
    *
-   * This function is triggered when a user clicks on a trigger element.
-   * It toggles the expanded state of the associated content group based on the current state (desktop or mobile).
+   * @return {void} Does not return any value.
+   */
+  onMediaQueryChange() {
+    if (this.mediaQuery.matches) {
+      this.state = 'desktop';
+
+      this.triggers.forEach((trigger, index) => {
+        if (this.navigation) this.navigation.append(trigger);
+
+        if (index !== 0) {
+          this.collapseTrigger(trigger);
+          this.groups[index].classList.remove(this.expandedClass);
+        } else {
+          this.expandTrigger(trigger);
+          this.groups[0].classList.add(this.expandedClass);
+        }
+      });
+    } else {
+      this.state = 'mobile';
+
+      this.triggers.forEach((trigger, index) => {
+        this.groups[index].prepend(trigger);
+        trigger.removeAttribute('tabindex');
+      });
+    }
+  }
+
+  /**
+   * Handles click events on a trigger element. On desktop, switches to the
+   * clicked tab; on mobile, toggles the associated content group like an accordion.
    *
-   * @param {Event} event - The click event object.
+   * @param {MouseEvent} event - The click event fired on the trigger.
    * @return {void} Does not return any value.
    */
   onTriggerClick(event) {
@@ -157,12 +194,11 @@ export class TabContent {
   }
 
   /**
-   * Handles the 'keydown' event for a trigger element.
+   * Handles keydown events on a trigger element. On desktop, `Enter`/`Space`
+   * activates the tab and arrow/Home/End keys navigate between tabs. On mobile,
+   * `Enter`/`Space` toggles the accordion group.
    *
-   * This function is triggered when a user presses a key while focused on a trigger element.
-   * It manages keyboard navigation and toggling of the associated content group based on the current state (desktop or mobile).
-   *
-   * @param {Event} event - The keydown event object.
+   * @param {KeyboardEvent} event - The keydown event fired on the trigger.
    * @return {void} Does not return any value.
    */
   onTriggerKeydown(event) {
@@ -190,6 +226,8 @@ export class TabContent {
       }
 
       if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+
         if (event.currentTarget === this.triggers[0]) {
           setTimeout(() => {
             this.triggers[this.triggers.length - 1].focus();
@@ -202,10 +240,12 @@ export class TabContent {
       }
 
       if (event.key === 'ArrowRight') {
+        event.preventDefault();
+
         if (event.currentTarget === this.triggers[this.triggers.length - 1]) {
           setTimeout(() => {
             this.triggers[0].focus();
-          });
+          }, 1);
         } else {
           setTimeout(() => {
             event.target.nextElementSibling.focus();
@@ -214,45 +254,53 @@ export class TabContent {
       }
 
       if (event.key === 'Home') {
+        event.preventDefault();
         setTimeout(() => {
           this.triggers[0].focus();
         }, 1);
       }
 
       if (event.key === 'End') {
+        event.preventDefault();
         setTimeout(() => {
           this.triggers[this.triggers.length - 1].focus();
-        })
+        }, 1);
       }
     }
 
     if (this.state === 'mobile') {
-      if (this.containsExpandedClass(event.currentTarget)) {
-        this.collapseTrigger(event.currentTarget);
-        controlledGroup.classList.remove(this.expandedClass);
-      } else {
-        // Expand accordion.
-        this.expandTrigger(event.currentTarget);
-        controlledGroup.classList.add(this.expandedClass);
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+
+        if (this.containsExpandedClass(event.currentTarget)) {
+          this.collapseTrigger(event.currentTarget);
+          controlledGroup.classList.remove(this.expandedClass);
+        } else {
+          // Expand accordion.
+          this.expandTrigger(event.currentTarget);
+          controlledGroup.classList.add(this.expandedClass);
+        }
       }
     }
   }
 
+  // UTILITIES
+
   /**
-   * Checks if the specified element contains the expanded class.
+   * Returns whether the specified element contains the expanded class.
    *
    * @param {HTMLElement} target - The element to check.
-   * @return {boolean} True if the element contains the expanded class, false otherwise.
+   * @return {boolean} `true` if the element has the expanded class, `false` otherwise.
    */
   containsExpandedClass(target) {
     return target.classList.contains(this.expandedClass);
   }
 
   /**
-   * Retrieves the element controlled by the specified trigger element's ID.
+   * Returns the element controlled by the given trigger's `aria-controls` attribute.
    *
    * @param {HTMLElement} target - The trigger element.
-   * @return {HTMLElement} The element controlled by the trigger.
+   * @return {HTMLElement|null} The controlled element, or `null` if not found.
    */
   getControlledByID(target) {
     const controlID = target.getAttribute('aria-controls');

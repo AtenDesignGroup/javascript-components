@@ -4,6 +4,10 @@
  * Functionality for an Accordion or group of Accordions using accessible methods as described by WCAG: https://www.w3.org/WAI/ARIA/apg/patterns/accordion
  */
 
+/**
+ * Represents an Accordion component with event handling and state management
+ * for expand/collapse interactions. One instance manages a single accordion element.
+ */
 export class Accordion {
   constructor(element, options = {}) {
     // Default options
@@ -16,113 +20,133 @@ export class Accordion {
       },
     };
 
-    // Merge default options with user-provided options
-    this.options = { ...defaultOptions, ...options };
+    // Deep merge for nested options
+    this.options = {
+      ...defaultOptions,
+      ...options,
+      selectors: { ...defaultOptions.selectors, ...(options.selectors ?? {}) },
+      classes:   { ...defaultOptions.classes,   ...(options.classes   ?? {}) },
+    };
 
-    this.expandedClass = this.options.classes.expanded;
     this.element = element;
+    this.expandedClass = this.options.classes.expanded;
     this.trigger = this.element.querySelector(this.options.selectors.trigger);
-    this.panel = this.element.querySelector(`#${Accordion.getControlledByID(this.trigger)}`);
+    this.panel = this.trigger
+      ? this.element.querySelector(`#${Accordion.getControlledByID(this.trigger)}`)
+      : null;
+
+    // Store bound handler references for cleanup
+    this._onClickTrigger   = this.onClickTrigger.bind(this);
+    this._onKeydownTrigger = this.onKeydownTrigger.bind(this);
   }
 
+  // LIFECYCLE
+
   /**
-   * Initializes the accordion component by setting up DOM element references
-   * and attaching necessary event listeners for interaction.
+   * Initializes the accordion component by attaching the necessary event listeners
+   * for click and keyboard interactions. Exits early if no trigger element is found.
    *
    * @return {void} Does not return any value.
    */
   init() {
-    this.trigger.addEventListener('click', this.onClickTrigger);
-    this.trigger.addEventListener('keydown', this.onKeydownTrigger);
+    if (!this.trigger) return;
+
+    this.trigger.addEventListener('click', this._onClickTrigger);
+    this.trigger.addEventListener('keydown', this._onKeydownTrigger);
   }
 
   /**
-   * Toggles the expanded or collapsed state of a component.
+   * Removes all event listeners attached by `init()`, cleaning up the instance
+   * so it can be safely discarded or re-initialized.
    *
-   * This function checks the current state of the component using the `isExpanded` method.
-   * If the component is expanded, it will invoke the `collapse` method to collapse the component.
-   * Otherwise, it will invoke the `expand` method to expand the component.
-   *
-   * Designed to be used as an event handler for a click event to trigger UI state changes.
+   * @return {void} Does not return any value.
    */
-  onClickTrigger = () => {
+  destroy() {
+    if (this.trigger) {
+      this.trigger.removeEventListener('click', this._onClickTrigger);
+      this.trigger.removeEventListener('keydown', this._onKeydownTrigger);
+    }
+  }
+
+  // STATE
+
+  /**
+   * Expands the accordion by adding the expanded class to the panel and trigger
+   * elements and updating the `aria-expanded` attribute to `true`.
+   *
+   * @return {void} Does not return a value.
+   */
+  expand() {
+    if (this.panel) this.panel.classList.add(this.expandedClass);
+    this.trigger.classList.add(this.expandedClass);
+    this.trigger.setAttribute('aria-expanded', 'true');
+  }
+
+  /**
+   * Collapses the accordion by removing the expanded class from the panel and
+   * trigger elements and updating the `aria-expanded` attribute to `false`.
+   *
+   * @return {void} Does not return a value.
+   */
+  collapse() {
+    if (this.panel) this.panel.classList.remove(this.expandedClass);
+    this.trigger.classList.remove(this.expandedClass);
+    this.trigger.setAttribute('aria-expanded', 'false');
+  }
+
+  // EVENT HANDLERS
+
+  /**
+   * Handles click events on the trigger element, toggling the expanded or
+   * collapsed state of the accordion.
+   *
+   * @return {void} Does not return any value.
+   */
+  onClickTrigger() {
     if (this.isExpanded()) {
       this.collapse();
     } else {
       this.expand();
     }
-  };
+  }
 
   /**
-   * Handles the 'keydown' event for an interactive element.
+   * Handles keydown events on the trigger element. Responds to `Enter` and
+   * `Space` by toggling the accordion state and suppressing the default browser
+   * action.
    *
-   * This function is triggered when a keydown event occurs and is designed specifically
-   * to respond to the 'Enter' or 'Space' keys. If either key is pressed, the default browser
-   * behavior is prevented, and the function toggles between collapsing and expanding
-   * the associated element based on its current state.
-   *
-   * @param {KeyboardEvent} event - The keyboard event object.
+   * @param {KeyboardEvent} event - The keyboard event fired on the trigger.
+   * @return {void} Does not return any value.
    */
-  onKeydownTrigger = (event) => {
+  onKeydownTrigger(event) {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
 
-      // Check to see if class exists first.
       if (this.isExpanded()) {
         this.collapse();
       } else {
         this.expand();
       }
     }
-  };
-
-  /**
-   * Expands the accordion by adding the expanded class to the relevant elements
-   * and updating the aria-expanded attribute to indicate an expanded state.
-   *
-   * @return {void} Does not return a value.
-   */
-  expand() {
-    this.panel.classList.add(this.expandedClass);
-    this.trigger.classList.add(this.expandedClass);
-    this.trigger.setAttribute('aria-expanded', 'true');
   }
 
-  /**
-   * Collapses the accordion by removing the expanded class from the accordion content
-   * and trigger elements, and updates the aria-expanded attribute to false.
-   *
-   * @return {void} Does not return a value.
-   */
-  collapse() {
-    this.panel.classList.remove(this.expandedClass);
-    this.trigger.classList.remove(this.expandedClass);
-    this.trigger.setAttribute('aria-expanded', 'false');
-  }
+  // UTILITIES
 
   /**
-   * Checks whether the accordion section is currently expanded.
+   * Returns whether the accordion section is currently expanded.
    *
-   * This function determines the state of the accordion by checking if
-   * the trigger element contains a specific CSS class that represents
-   * the expanded state of the accordion.
-   *
-   * @return {boolean} True if the accordion is expanded, otherwise false.
+   * @return {boolean} `true` if the trigger has the expanded class, `false` otherwise.
    */
   isExpanded() {
     return this.trigger.classList.contains(this.expandedClass);
   }
 
   /**
-   * Retrieves the ID of the element controlled by the given target element.
+   * Returns the value of the `aria-controls` attribute on the given element,
+   * which corresponds to the ID of the panel it controls.
    *
-   * This function accesses the `aria-controls` attribute of the provided target
-   * element and returns its value. The `aria-controls` attribute typically
-   * contains the ID of another element that the target element controls or affects.
-   *
-   * @param {Element} target - The DOM element from which to retrieve the `aria-controls` attribute.
-   * @returns {string | null} The value of the `aria-controls` attribute, or null if the attribute
-   * is not present.
+   * @param {Element} target - The DOM element from which to read `aria-controls`.
+   * @return {string|null} The controlled element's ID, or `null` if the attribute is absent.
    */
   static getControlledByID(target) {
     return target.getAttribute('aria-controls');

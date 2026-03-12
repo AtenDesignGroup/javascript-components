@@ -62,49 +62,15 @@ function _toPropertyKey(t) {
  * Functionality for an Accordion or group of Accordions using accessible methods as described by WCAG: https://www.w3.org/WAI/ARIA/apg/patterns/accordion
  */
 
+/**
+ * Represents an Accordion component with event handling and state management
+ * for expand/collapse interactions. One instance manages a single accordion element.
+ */
 var Accordion = /*#__PURE__*/function () {
   function Accordion(element) {
-    var _this = this;
+    var _options$selectors, _options$classes;
     var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     _classCallCheck(this, Accordion);
-    /**
-     * Toggles the expanded or collapsed state of a component.
-     *
-     * This function checks the current state of the component using the `isExpanded` method.
-     * If the component is expanded, it will invoke the `collapse` method to collapse the component.
-     * Otherwise, it will invoke the `expand` method to expand the component.
-     *
-     * Designed to be used as an event handler for a click event to trigger UI state changes.
-     */
-    _defineProperty(this, "onClickTrigger", function () {
-      if (_this.isExpanded()) {
-        _this.collapse();
-      } else {
-        _this.expand();
-      }
-    });
-    /**
-     * Handles the 'keydown' event for an interactive element.
-     *
-     * This function is triggered when a keydown event occurs and is designed specifically
-     * to respond to the 'Enter' or 'Space' keys. If either key is pressed, the default browser
-     * behavior is prevented, and the function toggles between collapsing and expanding
-     * the associated element based on its current state.
-     *
-     * @param {KeyboardEvent} event - The keyboard event object.
-     */
-    _defineProperty(this, "onKeydownTrigger", function (event) {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-
-        // Check to see if class exists first.
-        if (_this.isExpanded()) {
-          _this.collapse();
-        } else {
-          _this.expand();
-        }
-      }
-    });
     // Default options
     var defaultOptions = {
       selectors: {
@@ -115,63 +81,127 @@ var Accordion = /*#__PURE__*/function () {
       }
     };
 
-    // Merge default options with user-provided options
-    this.options = _objectSpread2(_objectSpread2({}, defaultOptions), options);
-    this.expandedClass = this.options.classes.expanded;
+    // Deep merge for nested options
+    this.options = _objectSpread2(_objectSpread2(_objectSpread2({}, defaultOptions), options), {}, {
+      selectors: _objectSpread2(_objectSpread2({}, defaultOptions.selectors), (_options$selectors = options.selectors) !== null && _options$selectors !== void 0 ? _options$selectors : {}),
+      classes: _objectSpread2(_objectSpread2({}, defaultOptions.classes), (_options$classes = options.classes) !== null && _options$classes !== void 0 ? _options$classes : {})
+    });
     this.element = element;
+    this.expandedClass = this.options.classes.expanded;
     this.trigger = this.element.querySelector(this.options.selectors.trigger);
-    this.panel = this.element.querySelector("#".concat(Accordion.getControlledByID(this.trigger)));
+    this.panel = this.trigger ? this.element.querySelector("#".concat(Accordion.getControlledByID(this.trigger))) : null;
+
+    // Store bound handler references for cleanup
+    this._onClickTrigger = this.onClickTrigger.bind(this);
+    this._onKeydownTrigger = this.onKeydownTrigger.bind(this);
   }
 
+  // LIFECYCLE
+
   /**
-   * Initializes the accordion component by setting up DOM element references
-   * and attaching necessary event listeners for interaction.
+   * Initializes the accordion component by attaching the necessary event listeners
+   * for click and keyboard interactions. Exits early if no trigger element is found.
    *
    * @return {void} Does not return any value.
    */
   return _createClass(Accordion, [{
     key: "init",
     value: function init() {
-      this.trigger.addEventListener('click', this.onClickTrigger);
-      this.trigger.addEventListener('keydown', this.onKeydownTrigger);
+      if (!this.trigger) return;
+      this.trigger.addEventListener('click', this._onClickTrigger);
+      this.trigger.addEventListener('keydown', this._onKeydownTrigger);
     }
-  }, {
-    key: "expand",
-    value:
+
     /**
-     * Expands the accordion by adding the expanded class to the relevant elements
-     * and updating the aria-expanded attribute to indicate an expanded state.
+     * Removes all event listeners attached by `init()`, cleaning up the instance
+     * so it can be safely discarded or re-initialized.
+     *
+     * @return {void} Does not return any value.
+     */
+  }, {
+    key: "destroy",
+    value: function destroy() {
+      if (this.trigger) {
+        this.trigger.removeEventListener('click', this._onClickTrigger);
+        this.trigger.removeEventListener('keydown', this._onKeydownTrigger);
+      }
+    }
+
+    // STATE
+
+    /**
+     * Expands the accordion by adding the expanded class to the panel and trigger
+     * elements and updating the `aria-expanded` attribute to `true`.
      *
      * @return {void} Does not return a value.
      */
-    function expand() {
-      this.panel.classList.add(this.expandedClass);
+  }, {
+    key: "expand",
+    value: function expand() {
+      if (this.panel) this.panel.classList.add(this.expandedClass);
       this.trigger.classList.add(this.expandedClass);
       this.trigger.setAttribute('aria-expanded', 'true');
     }
 
     /**
-     * Collapses the accordion by removing the expanded class from the accordion content
-     * and trigger elements, and updates the aria-expanded attribute to false.
+     * Collapses the accordion by removing the expanded class from the panel and
+     * trigger elements and updating the `aria-expanded` attribute to `false`.
      *
      * @return {void} Does not return a value.
      */
   }, {
     key: "collapse",
     value: function collapse() {
-      this.panel.classList.remove(this.expandedClass);
+      if (this.panel) this.panel.classList.remove(this.expandedClass);
       this.trigger.classList.remove(this.expandedClass);
       this.trigger.setAttribute('aria-expanded', 'false');
     }
 
+    // EVENT HANDLERS
+
     /**
-     * Checks whether the accordion section is currently expanded.
+     * Handles click events on the trigger element, toggling the expanded or
+     * collapsed state of the accordion.
      *
-     * This function determines the state of the accordion by checking if
-     * the trigger element contains a specific CSS class that represents
-     * the expanded state of the accordion.
+     * @return {void} Does not return any value.
+     */
+  }, {
+    key: "onClickTrigger",
+    value: function onClickTrigger() {
+      if (this.isExpanded()) {
+        this.collapse();
+      } else {
+        this.expand();
+      }
+    }
+
+    /**
+     * Handles keydown events on the trigger element. Responds to `Enter` and
+     * `Space` by toggling the accordion state and suppressing the default browser
+     * action.
      *
-     * @return {boolean} True if the accordion is expanded, otherwise false.
+     * @param {KeyboardEvent} event - The keyboard event fired on the trigger.
+     * @return {void} Does not return any value.
+     */
+  }, {
+    key: "onKeydownTrigger",
+    value: function onKeydownTrigger(event) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        if (this.isExpanded()) {
+          this.collapse();
+        } else {
+          this.expand();
+        }
+      }
+    }
+
+    // UTILITIES
+
+    /**
+     * Returns whether the accordion section is currently expanded.
+     *
+     * @return {boolean} `true` if the trigger has the expanded class, `false` otherwise.
      */
   }, {
     key: "isExpanded",
@@ -180,15 +210,11 @@ var Accordion = /*#__PURE__*/function () {
     }
 
     /**
-     * Retrieves the ID of the element controlled by the given target element.
+     * Returns the value of the `aria-controls` attribute on the given element,
+     * which corresponds to the ID of the panel it controls.
      *
-     * This function accesses the `aria-controls` attribute of the provided target
-     * element and returns its value. The `aria-controls` attribute typically
-     * contains the ID of another element that the target element controls or affects.
-     *
-     * @param {Element} target - The DOM element from which to retrieve the `aria-controls` attribute.
-     * @returns {string | null} The value of the `aria-controls` attribute, or null if the attribute
-     * is not present.
+     * @param {Element} target - The DOM element from which to read `aria-controls`.
+     * @return {string|null} The controlled element's ID, or `null` if the attribute is absent.
      */
   }], [{
     key: "getControlledByID",
@@ -890,11 +916,18 @@ var Modal = /*#__PURE__*/function () {
 /**
  * @file
  * Components - Tab Content
- * Functionality for an Accordion or group of Accordions using accessible methods as described by WCAG: https://www.w3.org/WAI/ARIA/apg/patterns/tabs
+ * Functionality for a Tab Content component using accessible methods as described by WCAG: https://www.w3.org/WAI/ARIA/apg/patterns/tabs
  */
 
+/**
+ * Represents a Tab Content component with event handling and state management
+ * for tab navigation. On desktop viewports the triggers are collected into a
+ * navigation bar; on mobile they revert to an accordion-style layout within
+ * each content group.
+ */
 var TabContent = /*#__PURE__*/function () {
   function TabContent(element) {
+    var _options$selectors, _options$classes;
     var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     _classCallCheck(this, TabContent);
     // Default options
@@ -910,8 +943,11 @@ var TabContent = /*#__PURE__*/function () {
       breakpoint: 768
     };
 
-    // Merge default options with user-provided options
-    this.options = _objectSpread2(_objectSpread2({}, defaultOptions), options);
+    // Deep merge for nested options
+    this.options = _objectSpread2(_objectSpread2(_objectSpread2({}, defaultOptions), options), {}, {
+      selectors: _objectSpread2(_objectSpread2({}, defaultOptions.selectors), (_options$selectors = options.selectors) !== null && _options$selectors !== void 0 ? _options$selectors : {}),
+      classes: _objectSpread2(_objectSpread2({}, defaultOptions.classes), (_options$classes = options.classes) !== null && _options$classes !== void 0 ? _options$classes : {})
+    });
     this.element = element;
     this.expandedClass = this.options.classes.expanded;
     this.navigation = this.element.querySelector(this.options.selectors.navigation);
@@ -919,11 +955,19 @@ var TabContent = /*#__PURE__*/function () {
     this.triggers = this.element.querySelectorAll(this.options.selectors.trigger);
     this.mediaQuery = null;
     this.state = null;
+
+    // Store bound handler references for cleanup
+    this._onTriggerClick = this.onTriggerClick.bind(this);
+    this._onTriggerKeydown = this.onTriggerKeydown.bind(this);
+    this._onMediaQueryChange = this.onMediaQueryChange.bind(this);
   }
 
+  // LIFECYCLE
+
   /**
-   * Initializes the tab content component by setting up DOM element references
-   * and attaching necessary event listeners for interaction.
+   * Initializes the tab content component by attaching event listeners to each
+   * trigger and setting up the responsive media query. Exits early per-trigger
+   * if no triggers are found.
    *
    * @return {void} Does not return any value.
    */
@@ -932,48 +976,38 @@ var TabContent = /*#__PURE__*/function () {
     value: function init() {
       var _this = this;
       this.triggers.forEach(function (trigger) {
-        trigger.addEventListener('click', _this.onTriggerClick.bind(_this));
-        trigger.addEventListener('keydown', _this.onTriggerKeydown.bind(_this));
+        trigger.addEventListener('click', _this._onTriggerClick);
+        trigger.addEventListener('keydown', _this._onTriggerKeydown);
       });
 
       // Device or viewport change listener and on load.
       this.mediaQuery = window.matchMedia("(min-width: ".concat(this.options.breakpoint, "px)"));
-      this.mediaQuery.addEventListener('change', this.onMediaQueryChange.bind(this));
-      this.onMediaQueryChange();
+      this.mediaQuery.addEventListener('change', this._onMediaQueryChange);
+      this._onMediaQueryChange();
     }
 
     /**
-     * Handles the 'change' event for a media query.
+     * Removes all event listeners attached by `init()`, cleaning up the instance
+     * so it can be safely discarded or re-initialized.
      *
-     * This function is triggered when the media query's evaluated result changes, such as when the viewport width crosses a specified breakpoint.
-     * It updates the component's state and adjusts the UI accordingly to ensure that the tab content behaves correctly in both desktop and mobile views.
-      *
      * @return {void} Does not return any value.
      */
   }, {
-    key: "onMediaQueryChange",
-    value: function onMediaQueryChange() {
+    key: "destroy",
+    value: function destroy() {
       var _this2 = this;
-      if (this.mediaQuery.matches) {
-        this.state = 'desktop';
-        this.triggers.forEach(function (trigger, index) {
-          _this2.navigation.append(trigger);
-          if (index !== 0) {
-            _this2.collapseTrigger(trigger);
-            _this2.groups[index].classList.remove(_this2.expandedClass);
-          } else {
-            _this2.expandTrigger(trigger);
-            _this2.groups[0].classList.add(_this2.expandedClass);
-          }
-        });
-      } else {
-        this.state = 'mobile';
-        this.triggers.forEach(function (trigger, index) {
-          _this2.groups[index].prepend(trigger);
-          trigger.removeAttribute('tabindex');
+      if (this.triggers) {
+        this.triggers.forEach(function (trigger) {
+          trigger.removeEventListener('click', _this2._onTriggerClick);
+          trigger.removeEventListener('keydown', _this2._onTriggerKeydown);
         });
       }
+      if (this.mediaQuery) {
+        this.mediaQuery.removeEventListener('change', this._onMediaQueryChange);
+      }
     }
+
+    // STATE
 
     /**
      * Collapses the specified trigger element, updating its ARIA attributes and CSS classes.
@@ -1009,27 +1043,58 @@ var TabContent = /*#__PURE__*/function () {
       }
     }
 
+    // EVENT HANDLERS
+
     /**
-     * Handles the 'click' event for a trigger element.
+     * Handles changes in media query state and repositions triggers between the
+     * navigation bar (desktop) and their individual content groups (mobile).
      *
-     * This function is triggered when a user clicks on a trigger element.
-     * It toggles the expanded state of the associated content group based on the current state (desktop or mobile).
+     * @return {void} Does not return any value.
+     */
+  }, {
+    key: "onMediaQueryChange",
+    value: function onMediaQueryChange() {
+      var _this3 = this;
+      if (this.mediaQuery.matches) {
+        this.state = 'desktop';
+        this.triggers.forEach(function (trigger, index) {
+          if (_this3.navigation) _this3.navigation.append(trigger);
+          if (index !== 0) {
+            _this3.collapseTrigger(trigger);
+            _this3.groups[index].classList.remove(_this3.expandedClass);
+          } else {
+            _this3.expandTrigger(trigger);
+            _this3.groups[0].classList.add(_this3.expandedClass);
+          }
+        });
+      } else {
+        this.state = 'mobile';
+        this.triggers.forEach(function (trigger, index) {
+          _this3.groups[index].prepend(trigger);
+          trigger.removeAttribute('tabindex');
+        });
+      }
+    }
+
+    /**
+     * Handles click events on a trigger element. On desktop, switches to the
+     * clicked tab; on mobile, toggles the associated content group like an accordion.
      *
-     * @param {Event} event - The click event object.
+     * @param {MouseEvent} event - The click event fired on the trigger.
      * @return {void} Does not return any value.
      */
   }, {
     key: "onTriggerClick",
     value: function onTriggerClick(event) {
-      var _this3 = this;
+      var _this4 = this;
       var controlledGroup = this.getControlledByID(event.currentTarget);
       if (this.state === 'desktop') {
         if (!this.containsExpandedClass(event.currentTarget) && !this.containsExpandedClass(controlledGroup)) {
           this.triggers.forEach(function (trigger) {
-            _this3.collapseTrigger(trigger);
+            _this4.collapseTrigger(trigger);
           });
           this.groups.forEach(function (group) {
-            group.classList.remove(_this3.expandedClass);
+            group.classList.remove(_this4.expandedClass);
           });
           this.expandTrigger(event.currentTarget);
           controlledGroup.classList.add(this.expandedClass);
@@ -1047,37 +1112,37 @@ var TabContent = /*#__PURE__*/function () {
     }
 
     /**
-     * Handles the 'keydown' event for a trigger element.
+     * Handles keydown events on a trigger element. On desktop, `Enter`/`Space`
+     * activates the tab and arrow/Home/End keys navigate between tabs. On mobile,
+     * `Enter`/`Space` toggles the accordion group.
      *
-     * This function is triggered when a user presses a key while focused on a trigger element.
-     * It manages keyboard navigation and toggling of the associated content group based on the current state (desktop or mobile).
-     *
-     * @param {Event} event - The keydown event object.
+     * @param {KeyboardEvent} event - The keydown event fired on the trigger.
      * @return {void} Does not return any value.
      */
   }, {
     key: "onTriggerKeydown",
     value: function onTriggerKeydown(event) {
-      var _this4 = this;
+      var _this5 = this;
       var controlledGroup = this.getControlledByID(event.currentTarget);
       if (this.state === 'desktop') {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
           if (!this.containsExpandedClass(event.currentTarget) && !this.containsExpandedClass(controlledGroup)) {
             this.triggers.forEach(function (trigger) {
-              _this4.collapseTrigger(trigger);
+              _this5.collapseTrigger(trigger);
             });
             this.groups.forEach(function (element) {
-              element.classList.remove(_this4.expandedClass);
+              element.classList.remove(_this5.expandedClass);
             });
             this.expandTrigger(event.currentTarget);
             controlledGroup.classList.add(this.expandedClass);
           }
         }
         if (event.key === 'ArrowLeft') {
+          event.preventDefault();
           if (event.currentTarget === this.triggers[0]) {
             setTimeout(function () {
-              _this4.triggers[_this4.triggers.length - 1].focus();
+              _this5.triggers[_this5.triggers.length - 1].focus();
             }, 1);
           } else {
             setTimeout(function () {
@@ -1086,10 +1151,11 @@ var TabContent = /*#__PURE__*/function () {
           }
         }
         if (event.key === 'ArrowRight') {
+          event.preventDefault();
           if (event.currentTarget === this.triggers[this.triggers.length - 1]) {
             setTimeout(function () {
-              _this4.triggers[0].focus();
-            });
+              _this5.triggers[0].focus();
+            }, 1);
           } else {
             setTimeout(function () {
               event.target.nextElementSibling.focus();
@@ -1097,33 +1163,40 @@ var TabContent = /*#__PURE__*/function () {
           }
         }
         if (event.key === 'Home') {
+          event.preventDefault();
           setTimeout(function () {
-            _this4.triggers[0].focus();
+            _this5.triggers[0].focus();
           }, 1);
         }
         if (event.key === 'End') {
+          event.preventDefault();
           setTimeout(function () {
-            _this4.triggers[_this4.triggers.length - 1].focus();
-          });
+            _this5.triggers[_this5.triggers.length - 1].focus();
+          }, 1);
         }
       }
       if (this.state === 'mobile') {
-        if (this.containsExpandedClass(event.currentTarget)) {
-          this.collapseTrigger(event.currentTarget);
-          controlledGroup.classList.remove(this.expandedClass);
-        } else {
-          // Expand accordion.
-          this.expandTrigger(event.currentTarget);
-          controlledGroup.classList.add(this.expandedClass);
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          if (this.containsExpandedClass(event.currentTarget)) {
+            this.collapseTrigger(event.currentTarget);
+            controlledGroup.classList.remove(this.expandedClass);
+          } else {
+            // Expand accordion.
+            this.expandTrigger(event.currentTarget);
+            controlledGroup.classList.add(this.expandedClass);
+          }
         }
       }
     }
 
+    // UTILITIES
+
     /**
-     * Checks if the specified element contains the expanded class.
+     * Returns whether the specified element contains the expanded class.
      *
      * @param {HTMLElement} target - The element to check.
-     * @return {boolean} True if the element contains the expanded class, false otherwise.
+     * @return {boolean} `true` if the element has the expanded class, `false` otherwise.
      */
   }, {
     key: "containsExpandedClass",
@@ -1132,10 +1205,10 @@ var TabContent = /*#__PURE__*/function () {
     }
 
     /**
-     * Retrieves the element controlled by the specified trigger element's ID.
+     * Returns the element controlled by the given trigger's `aria-controls` attribute.
      *
      * @param {HTMLElement} target - The trigger element.
-     * @return {HTMLElement} The element controlled by the trigger.
+     * @return {HTMLElement|null} The controlled element, or `null` if not found.
      */
   }, {
     key: "getControlledByID",
@@ -1160,8 +1233,8 @@ var Sticky = /*#__PURE__*/function () {
     /**
      * Handle the scroll event by queuing an update on the next animation frame.
      * This throttles the update calls to once per frame for performance.
-     * 
-     * @returns {void}
+     *
+     * @return {void}
      */
     _defineProperty(this, "onScroll", function () {
       // Only queue an update if one isn't already waiting for the next frame.
@@ -1196,8 +1269,8 @@ var Sticky = /*#__PURE__*/function () {
   /**
    * Mount the sticky element by setting up necessary styles, caching layout values,
    * and attaching event listeners for scroll and resize events.
-   * 
-   * @returns {void}
+   *
+   * @return {void}
    */
   return _createClass(Sticky, [{
     key: "mount",
@@ -1222,7 +1295,7 @@ var Sticky = /*#__PURE__*/function () {
       // Cache the parent's document-relative top once and refresh on resize.
       this._cacheParentTop();
       this._resizeObserver = new ResizeObserver(function () {
-        return _this2._cacheParentTop();
+        return _this2.update();
       });
       this._resizeObserver.observe(this.parent);
       this._resizeObserver.observe(document.documentElement);
@@ -1236,8 +1309,8 @@ var Sticky = /*#__PURE__*/function () {
 
     /**
      * Unmount the sticky element by removing event listeners and disconnecting any observers to clean up resources.
-     * 
-     * @returns {void}
+     *
+     * @return {void}
      */
   }, {
     key: "destroy",
@@ -1249,10 +1322,10 @@ var Sticky = /*#__PURE__*/function () {
 
     /**
      * Apply a visual state to the sticky element by adding/removing CSS classes and setting the `top` style.
-     * 
+     *
      * @param {'default'|'stuck'|'bottom'} state - The state to apply to the element.
      * @param {number} [top] - The top offset in pixels to apply when the state is 'stuck'.
-     * @returns {void}
+     * @return {void}
      */
   }, {
     key: "applyState",
@@ -1277,8 +1350,8 @@ var Sticky = /*#__PURE__*/function () {
 
     /**
      * Recalculate and apply the appropriate sticky state based on the current scroll position.
-     * 
-     * @returns {void}
+     *
+     * @return {void}
      */
   }, {
     key: "update",
@@ -1313,9 +1386,9 @@ var Sticky = /*#__PURE__*/function () {
     key: "_cacheParentTop",
     value:
     /**
-     * Calculate and cache the top offset of the parent element relative to the document.
-     * 
-     * @returns {number} The top offset of the parent element in pixels.
+     * Calculates the top offset of the parent element relative to the document.
+     *
+     * @return {number} The top offset of the parent element in pixels.
      */
     function _cacheParentTop() {
       return this.parent.getBoundingClientRect().top + window.scrollY;

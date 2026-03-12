@@ -36,8 +36,8 @@ export class Sticky {
   /**
    * Mount the sticky element by setting up necessary styles, caching layout values,
    * and attaching event listeners for scroll and resize events.
-   * 
-   * @returns {void}
+   *
+   * @return {void}
    */
   mount() {
     if (!this.parent) return;
@@ -58,7 +58,7 @@ export class Sticky {
 
     // Cache the parent's document-relative top once and refresh on resize.
     this._cacheParentTop();
-    this._resizeObserver = new ResizeObserver(() => this._cacheParentTop());
+    this._resizeObserver = new ResizeObserver(() => this.update());
     this._resizeObserver.observe(this.parent);
     this._resizeObserver.observe(document.documentElement);
 
@@ -70,8 +70,8 @@ export class Sticky {
 
   /**
    * Unmount the sticky element by removing event listeners and disconnecting any observers to clean up resources.
-   * 
-   * @returns {void}
+   *
+   * @return {void}
    */
   destroy() {
     window.removeEventListener('scroll', this.onScroll);
@@ -80,10 +80,10 @@ export class Sticky {
 
   /**
    * Apply a visual state to the sticky element by adding/removing CSS classes and setting the `top` style.
-   * 
+   *
    * @param {'default'|'stuck'|'bottom'} state - The state to apply to the element.
    * @param {number} [top] - The top offset in pixels to apply when the state is 'stuck'.
-   * @returns {void}
+   * @return {void}
    */
   applyState(state, top) {
     // 'stuck' is never short-circuited because the `top` offset changes on
@@ -107,8 +107,8 @@ export class Sticky {
 
   /**
    * Recalculate and apply the appropriate sticky state based on the current scroll position.
-   * 
-   * @returns {void}
+   *
+   * @return {void}
    */
   update() {
     const parentTop = this._cacheParentTop();
@@ -144,8 +144,8 @@ export class Sticky {
   /**
    * Handle the scroll event by queuing an update on the next animation frame.
    * This throttles the update calls to once per frame for performance.
-   * 
-   * @returns {void}
+   *
+   * @return {void}
    */
   onScroll = () => {
     // Only queue an update if one isn't already waiting for the next frame.
@@ -156,9 +156,9 @@ export class Sticky {
   };
 
   /**
-   * Calculate and cache the top offset of the parent element relative to the document.
-   * 
-   * @returns {number} The top offset of the parent element in pixels.
+   * Calculates the top offset of the parent element relative to the document.
+   *
+   * @return {number} The top offset of the parent element in pixels.
    */
   _cacheParentTop() {
     return this.parent.getBoundingClientRect().top + window.scrollY;

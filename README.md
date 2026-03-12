@@ -19,6 +19,7 @@ Found a bug or have a feature request? Please [open an issue](https://github.com
 03. [Tab Content](#tab-content)
 04. [Menu](#menu)
 05. [Sticky](#sticky)
+06. [Modal](#modal)
 ---
 
 ## Installation
@@ -403,3 +404,104 @@ The element transitions between three states as the page scrolls:
 |--------|-------------|
 | `mount()` | Caches layout values, attaches scroll and resize listeners, and applies the initial state |
 | `destroy()` | Removes the scroll listener and disconnects the `ResizeObserver` |
+
+## Modal
+
+### Features
+
+- 🌟 Fully accessible implementation
+- ⌨️ Full keyboard support with focus trapping
+- 🔒 Body scroll locked while open
+- 🖱️ Overlay click to close
+- 🔄 Focus restored to the triggering element on close
+- 📌 Modal relocated to `<body>` on mount for reliable fixed positioning
+
+### Basic Usage
+
+**HTML**
+
+```html
+<button type="button" aria-controls="my-modal" aria-expanded="false">
+  Open Modal
+</button>
+
+<div id="my-modal"
+     class="modal"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="my-modal-title"
+     aria-hidden="true">
+  <div class="modal__overlay">
+    <div class="modal__dialog">
+      <button type="button" class="modal__close" aria-label="Close modal">Close</button>
+      <h2 id="my-modal-title">Modal Title</h2>
+      <p>Modal content goes here.</p>
+    </div>
+  </div>
+</div>
+```
+
+**JavaScript**
+
+```javascript
+import { Modal } from '@atendesign/javascript-components';
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.modal').forEach(modal => {
+        const modalComponent = new Modal(modal);
+        modalComponent.mount();
+    });
+});
+```
+
+### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `selectors.trigger` | string | `'[aria-controls="{id}"]'` | CSS selector for trigger buttons (scoped to the whole document) |
+| `selectors.closeButton` | string | `'.modal__close'` | CSS selector for close buttons inside the modal |
+| `selectors.overlay` | string | `'.modal__overlay'` | CSS selector for the overlay element; clicking it closes the modal |
+| `classes.expanded` | string | `'is-expanded'` | CSS class applied to the modal element when it is open |
+
+### Custom Options Example
+
+```javascript
+const modalComponent = new Modal(modalElement, {
+    selectors: {
+        trigger: '.my-open-button',
+        closeButton: '.my-modal__close',
+        overlay: '.my-modal__overlay',
+    },
+    classes: {
+        expanded: 'is-open',
+    },
+});
+
+modalComponent.mount();
+```
+
+### Required HTML Attributes
+
+- `id` on the modal element (must match each trigger's `aria-controls` value)
+- `role="dialog"` on the modal element
+- `aria-modal="true"` on the modal element
+- `aria-labelledby` on the modal element (should reference the dialog heading's ID)
+- `aria-hidden="true"` on the modal element (automatically managed by the component)
+- `aria-controls` on trigger buttons (must match the modal element's ID)
+- `aria-expanded` on trigger buttons (automatically managed by the component)
+- `aria-label` or visible label on each close button
+
+### Keyboard Support
+
+| Key | Action |
+|-----|--------|
+| `Escape` | Close the modal and return focus to the triggering element |
+| `Tab` | Move focus to the next focusable element; wraps from last to first |
+| `Shift+Tab` | Move focus to the previous focusable element; wraps from first to last |
+
+### Lifecycle Methods
+
+| Method | Description |
+|--------|-------------|
+| `mount()` | Relocates the modal to `<body>`, caches internal elements, and attaches all event listeners |
+| `destroy()` | Removes all event listeners attached by `mount()` |

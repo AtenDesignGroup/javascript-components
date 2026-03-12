@@ -268,7 +268,7 @@ export class Menu {
    * @param {HTMLElement} target - The DOM element representing the submenu to expand.
    * @return {void} This method does not return any value.
    */
-   expandSubMenu(target) {
+  expandSubMenu(target) {
     target.setAttribute('aria-expanded', 'true');
     target.classList.add(this.expandedClass);
   }
@@ -291,7 +291,7 @@ export class Menu {
    * @param {Element} target - The target element whose next sibling is to be found.
    * @return {Element|null} The next sibling element, or null if no siblings are found.
    */
-   getNextSibling(target) {
+  getNextSibling(target) {
     const siblings = this.getSiblings(target);
     if (!siblings.length) return null;
     const currentIndex = Array.from(siblings).indexOf(target);
@@ -305,7 +305,7 @@ export class Menu {
    * @param {Element} target - The target element for which the previous sibling is to be retrieved.
    * @return {Element|null} The previous sibling element, or null if there are no siblings.
    */
-   getPreviousSibling(target) {
+  getPreviousSibling(target) {
     const siblings = this.getSiblings(target);
     if (!siblings.length) return null;
     const currentIndex = Array.from(siblings).indexOf(target);
@@ -334,7 +334,7 @@ export class Menu {
    * @return {NodeList} A list of parent menu items, including `<a>`, `<button>`, and `<span>`
    * elements, or an empty NodeList if no parent menu exists.
    */
-   getParentMenuItems(target) {
+  getParentMenuItems(target) {
     const menuBelow = target.closest(this.dropdownSelector);
     if (!menuBelow) return [];
 
@@ -354,7 +354,7 @@ export class Menu {
    * @return {NodeList|Array} A NodeList containing the submenu link elements.
    * If the submenu does not exist, an empty array is returned.
    */
-   getSubMenuLinks(target) {
+  getSubMenuLinks(target) {
     const subMenu = target.nextElementSibling;
     if (!subMenu) return [];
     return subMenu.querySelectorAll(`

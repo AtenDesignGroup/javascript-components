@@ -14,5 +14,6 @@ export { Sticky } from './components/Sticky.js';
 // Export all components as a named export for convenience
 export * from './components/Accordion.js';
 export * from './components/Menu.js';
+export * from './components/Modal.js';
 export * from './components/TabContent.js';
 export * from './components/Sticky.js';
