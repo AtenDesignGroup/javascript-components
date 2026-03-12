@@ -18,6 +18,7 @@ Found a bug or have a feature request? Please [open an issue](https://github.com
 02. [Accordion](#accordion)
 03. [Tab Content](#tab-content)
 04. [Menu](#menu)
+05. [Sticky](#sticky)
 ---
 
 ## Installation
@@ -311,3 +312,94 @@ menuComponent.mount();
 |--------|-------------|
 | `mount()` | Attaches all event listeners and initialises the responsive media query |
 | `destroy()` | Removes all event listeners and cleans up the component |
+
+## Sticky
+
+### Features
+
+- 🌟 Scroll-aware positioning bounded within a parent container
+- ⚡ Optimised with `requestAnimationFrame` throttling — one update per frame
+- 📐 `ResizeObserver` keeps layout measurements accurate after DOM reflow
+- 🎨 Customizable class names and top-spacing
+- 🔄 Three-state lifecycle: `default` → `stuck` → `bottom`
+
+### Basic Usage
+
+**HTML**
+
+```html
+<div class="sticky-parent">
+  <aside class="sticky-element">
+    I stick within my parent!
+  </aside>
+  <div class="sticky-content">
+    <!-- tall content -->
+  </div>
+</div>
+```
+
+**CSS**
+
+```css
+/* The parent receives position: relative automatically if not already set. */
+.sticky-element.is-stuck {
+  position: absolute;
+}
+
+.sticky-element.is-bottom {
+  position: absolute;
+  bottom: 0;
+}
+```
+
+**JavaScript**
+
+```javascript
+import { Sticky } from '@atendesign/javascript-components';
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.is-sticky').forEach(el => {
+        const stickyComponent = new Sticky(el);
+        stickyComponent.mount();
+    });
+});
+```
+
+### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `topSpacing` | number | `40` | Gap in pixels between the viewport top and the stuck element |
+| `classes.stuck` | string | `'is-stuck'` | CSS class applied when the element is in the sticky (viewport-tracking) state |
+| `classes.bottom` | string | `'is-bottom'` | CSS class applied when the element has reached the bottom boundary of its parent |
+
+### Custom Options Example
+
+```javascript
+const stickyComponent = new Sticky(el, {
+    topSpacing: 80,
+    classes: {
+        stuck: 'is-pinned',
+        bottom: 'is-anchored',
+    },
+});
+
+stickyComponent.mount();
+```
+
+### How It Works
+
+The element transitions between three states as the page scrolls:
+
+| State | Condition | Description |
+|-------|-----------|-------------|
+| `default` | Before the sticky zone | Element stays in its natural document position |
+| `stuck` | Inside the sticky zone | Tracks the viewport via `position: absolute` + an inline `top` offset |
+| `bottom` | Past the parent's boundary | Anchored to the parent's bottom edge |
+
+### Lifecycle Methods
+
+| Method | Description |
+|--------|-------------|
+| `mount()` | Caches layout values, attaches scroll and resize listeners, and applies the initial state |
+| `destroy()` | Removes the scroll listener and disconnects the `ResizeObserver` |
