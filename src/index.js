@@ -7,6 +7,7 @@
 // Components
 export { Accordion } from './components/Accordion.js';
 export { Menu } from './components/Menu.js';
+export { Modal } from './components/Modal.js';
 export { TabContent } from './components/TabContent.js';
 export { Sticky } from './components/Sticky.js';
 

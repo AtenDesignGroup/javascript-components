@@ -25,6 +25,7 @@
     "./src": "./src/index.js",
     "./components/Accordion": "./src/components/Accordion.js",
     "./components/Menu": "./src/components/Menu.js",
+    "./components/Modal": "./src/components/Modal.js",
     "./components/TabContent": "./src/components/TabContent.js"
   },
   "author": "Philip Stier",

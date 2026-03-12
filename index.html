@@ -184,6 +184,85 @@
       bottom: 0;
     }
     footer {}
+    /* Modal */
+    .modal {
+      display: none;
+    }
+    .modal.is-expanded {
+      display: block;
+    }
+    .modal__overlay {
+      align-items: center;
+      background-color: rgba(0, 0, 0, 0.6);
+      bottom: 0;
+      display: flex;
+      justify-content: center;
+      left: 0;
+      padding: 20px;
+      position: fixed;
+      right: 0;
+      top: 0;
+      z-index: 1000;
+    }
+    .modal__dialog {
+      background: white;
+      border-radius: 4px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - 40px);
+      max-width: 600px;
+      overflow: hidden;
+      width: 100%;
+    }
+    .modal__header {
+      align-items: center;
+      border-bottom: 1px solid var(--fed-tools-clr-gray-300);
+      display: flex;
+      justify-content: space-between;
+      padding: 16px 20px;
+    }
+    .modal__title {
+      font-size: 1.25rem;
+      margin: 0;
+    }
+    .modal__close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.5rem;
+      line-height: 1;
+      padding: 4px 8px;
+    }
+    .modal__body {
+      overflow-y: auto;
+      padding: 20px;
+    }
+    .modal__body p {
+      margin: 0 0 12px;
+    }
+    .modal__body p:last-child {
+      margin-bottom: 0;
+    }
+    .modal__footer {
+      border-top: 1px solid var(--fed-tools-clr-gray-300);
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      padding: 16px 20px;
+    }
+    .modal__footer button {
+      background-color: var(--fed-tools-clr-gray-800);
+      border: none;
+      border-radius: 4px;
+      color: white;
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 10px 20px;
+    }
+    .modal__footer button:hover {
+      opacity: 0.85;
+    }
   </style>
 </head>
 <body>
@@ -641,6 +720,99 @@ stickyComponent.mount();
       </pre>
     </div>
   </section>
+  <section id="modal">
+    <h2>Modal</h2>
+    <p>An accessible modal dialog component that follows
+      <a href="https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/" target="_blank">
+        WCAG guidelines
+      </a>.
+    </p>
+
+    <button type="button"
+            class="modal__trigger"
+            aria-controls="modal-example"
+            aria-expanded="false">
+      Open Modal
+    </button>
+
+    <!-- Modal element — relocated to bottom of &lt;body&gt; on mount() -->
+    <div id="modal-example" class="modal" aria-hidden="true">
+      <div class="modal__overlay">
+        <div role="dialog"
+             class="modal__dialog"
+             aria-modal="true"
+             aria-labelledby="modal-example-title">
+          <header class="modal__header">
+            <h2 class="modal__title" id="modal-example-title">Modal Title</h2>
+            <button type="button" class="modal__close" aria-label="Close modal">&times;</button>
+          </header>
+          <div class="modal__body">
+            <p>This is the modal body content. The modal component traps focus within the dialog while open, and returns focus to the triggering element when closed.</p>
+            <p>Press <kbd>Escape</kbd> or click the overlay to close.</p>
+          </div>
+          <footer class="modal__footer">
+            <button type="button" class="modal__close">Close</button>
+          </footer>
+        </div>
+      </div>
+    </div>
+
+    <h3>HTML Structure</h3>
+    <div class="code-example">
+      <pre>
+&lt;!-- Trigger (anywhere on the page) --&gt;
+&lt;button type="button" class="modal__trigger" aria-controls="modal-example" aria-expanded="false"&gt;
+  Open Modal
+&lt;/button&gt;
+
+&lt;!-- Modal element (relocated to &lt;body&gt; on mount()) --&gt;
+&lt;div id="modal-example" class="modal" aria-hidden="true"&gt;
+  &lt;div class="modal__overlay"&gt;
+    &lt;div role="dialog" class="modal__dialog" aria-modal="true" aria-labelledby="modal-example-title"&gt;
+      &lt;header class="modal__header"&gt;
+        &lt;h2 class="modal__title" id="modal-example-title"&gt;Modal Title&lt;/h2&gt;
+        &lt;button type="button" class="modal__close" aria-label="Close modal"&gt;&amp;times;&lt;/button&gt;
+      &lt;/header&gt;
+      &lt;div class="modal__body"&gt;
+        &lt;p&gt;Modal content goes here.&lt;/p&gt;
+      &lt;/div&gt;
+      &lt;footer class="modal__footer"&gt;
+        &lt;button type="button" class="modal__close"&gt;Close&lt;/button&gt;
+      &lt;/footer&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+      </pre>
+    </div>
+
+    <h3>JavaScript Initialization</h3>
+    <div class="code-example">
+      <pre>
+// Initialize all modals on the page
+document.querySelectorAll('.modal').forEach(modal => {
+  const modalComponent = new Modal(modal);
+  modalComponent.mount();
+});
+      </pre>
+    </div>
+
+    <h3>Custom Options Example</h3>
+    <div class="code-example">
+      <pre>
+const modalComponent = new Modal(modalElement, {
+  selectors: {
+    closeButton: '.my-modal__close',
+    overlay: '.my-modal__overlay',
+  },
+  classes: {
+    expanded: 'is-open',
+  },
+});
+
+modalComponent.mount();
+      </pre>
+    </div>
+  </section>
 </main>
 
 <footer>
@@ -651,9 +823,9 @@ stickyComponent.mount();
 <script>
   // Initialize components after the DOM is fully loaded
   document.addEventListener('DOMContentLoaded', function() {
-    const { Accordion, Menu, TabContent, Sticky } = window.JavaScriptComponents || {};
+    const { Accordion, Menu, Modal, TabContent, Sticky } = window.JavaScriptComponents || {};
 
-    if (!Accordion || !Menu || !TabContent || !Sticky) {
+    if (!Accordion || !Menu || !Modal || !TabContent || !Sticky) {
       console.error('JavaScriptComponents bundle not available. Run "npm run build" to generate ./dist files.');
       return;
     }
@@ -679,6 +851,12 @@ stickyComponent.mount();
     document.querySelectorAll('.sticky-element').forEach(el => {
       const stickyComponent = new Sticky(el);
       stickyComponent.mount();
+    });
+
+    // Initialize modals
+    document.querySelectorAll('.modal').forEach(modal => {
+      const modalComponent = new Modal(modal);
+      modalComponent.mount();
     });
   });
 </script>
