@@ -34,9 +34,10 @@ export class Modal {
     this.element = element;
     this.expandedClass = this.options.classes.expanded;
     this.overlay = null;
-    this.closeButtons = null;
-    this.triggers = null;
+    this.closeButtons = [];
+    this.triggers = [];
     this._previousFocus = null;
+    this._previousOverflow = null;
 
     // Store bound handler references for cleanup
     this._onTriggerClick  = this.onTriggerClick.bind(this);
@@ -72,8 +73,6 @@ export class Modal {
     if (this.overlay) {
       this.overlay.addEventListener('click', this._onOverlayClick);
     }
-
-    document.addEventListener('keydown', this._onKeydown);
   }
 
   /**
@@ -83,14 +82,16 @@ export class Modal {
    * @return {void} This method does not return any value.
    */
   destroy() {
-    this.triggers.forEach((trigger) => trigger.removeEventListener('click', this._onTriggerClick));
-    this.closeButtons.forEach((btn) => btn.removeEventListener('click', this._onCloseClick));
+    if (this.triggers) {
+      this.triggers.forEach((trigger) => trigger.removeEventListener('click', this._onTriggerClick));
+    }
+    if (this.closeButtons) {
+      this.closeButtons.forEach((btn) => btn.removeEventListener('click', this._onCloseClick));
+    }
 
     if (this.overlay) {
       this.overlay.removeEventListener('click', this._onOverlayClick);
     }
-
-    document.removeEventListener('keydown', this._onKeydown);
   }
 
   // STATE
@@ -113,12 +114,21 @@ export class Modal {
 
     this.triggers.forEach((t) => t.setAttribute('aria-expanded', 'true'));
 
+    this._previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
-    // Focus the first focusable element inside the modal
+    document.addEventListener('keydown', this._onKeydown);
+
+    // Focus the first focusable element inside the modal, or the modal itself
     const focusable = this.getFocusableElements();
     if (focusable.length) {
       focusable[0].focus();
+    } else {
+      // Ensure the modal container is focusable so focus can be moved inside
+      if (!this.element.hasAttribute('tabindex')) {
+        this.element.setAttribute('tabindex', '-1');
+      }
+      this.element.focus();
     }
   }
 
@@ -135,7 +145,10 @@ export class Modal {
 
     this.triggers.forEach((t) => t.setAttribute('aria-expanded', 'false'));
 
-    document.body.style.overflow = '';
+    document.body.style.overflow = this._previousOverflow ?? '';
+    this._previousOverflow = null;
+
+    document.removeEventListener('keydown', this._onKeydown);
 
     // Return focus to the element that opened the modal
     if (this._previousFocus) {

@@ -638,9 +638,10 @@ var Modal = /*#__PURE__*/function () {
     this.element = element;
     this.expandedClass = this.options.classes.expanded;
     this.overlay = null;
-    this.closeButtons = null;
-    this.triggers = null;
+    this.closeButtons = [];
+    this.triggers = [];
     this._previousFocus = null;
+    this._previousOverflow = null;
 
     // Store bound handler references for cleanup
     this._onTriggerClick = this.onTriggerClick.bind(this);
@@ -682,7 +683,6 @@ var Modal = /*#__PURE__*/function () {
       if (this.overlay) {
         this.overlay.addEventListener('click', this._onOverlayClick);
       }
-      document.addEventListener('keydown', this._onKeydown);
     }
 
     /**
@@ -695,16 +695,19 @@ var Modal = /*#__PURE__*/function () {
     key: "destroy",
     value: function destroy() {
       var _this2 = this;
-      this.triggers.forEach(function (trigger) {
-        return trigger.removeEventListener('click', _this2._onTriggerClick);
-      });
-      this.closeButtons.forEach(function (btn) {
-        return btn.removeEventListener('click', _this2._onCloseClick);
-      });
+      if (this.triggers) {
+        this.triggers.forEach(function (trigger) {
+          return trigger.removeEventListener('click', _this2._onTriggerClick);
+        });
+      }
+      if (this.closeButtons) {
+        this.closeButtons.forEach(function (btn) {
+          return btn.removeEventListener('click', _this2._onCloseClick);
+        });
+      }
       if (this.overlay) {
         this.overlay.removeEventListener('click', this._onOverlayClick);
       }
-      document.removeEventListener('keydown', this._onKeydown);
     }
 
     // STATE
@@ -728,12 +731,20 @@ var Modal = /*#__PURE__*/function () {
       this.triggers.forEach(function (t) {
         return t.setAttribute('aria-expanded', 'true');
       });
+      this._previousOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
+      document.addEventListener('keydown', this._onKeydown);
 
-      // Focus the first focusable element inside the modal
+      // Focus the first focusable element inside the modal, or the modal itself
       var focusable = this.getFocusableElements();
       if (focusable.length) {
         focusable[0].focus();
+      } else {
+        // Ensure the modal container is focusable so focus can be moved inside
+        if (!this.element.hasAttribute('tabindex')) {
+          this.element.setAttribute('tabindex', '-1');
+        }
+        this.element.focus();
       }
     }
 
@@ -747,12 +758,15 @@ var Modal = /*#__PURE__*/function () {
   }, {
     key: "close",
     value: function close() {
+      var _this$_previousOverfl;
       this.element.classList.remove(this.expandedClass);
       this.element.setAttribute('aria-hidden', 'true');
       this.triggers.forEach(function (t) {
         return t.setAttribute('aria-expanded', 'false');
       });
-      document.body.style.overflow = '';
+      document.body.style.overflow = (_this$_previousOverfl = this._previousOverflow) !== null && _this$_previousOverfl !== void 0 ? _this$_previousOverfl : '';
+      this._previousOverflow = null;
+      document.removeEventListener('keydown', this._onKeydown);
 
       // Return focus to the element that opened the modal
       if (this._previousFocus) {
