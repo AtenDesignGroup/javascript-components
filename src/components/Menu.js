@@ -206,7 +206,7 @@ export class Menu {
           const parentItem = this.getSubMenuTrigger(current);
           const parentSiblings = this.getSiblings(parentItem);
           const currentIndex = Array.from(parentSiblings).indexOf(parentItem);
-          parentSiblings[currentIndex + 1]?.focus();
+          (parentSiblings[currentIndex + 1] ?? parentItem).focus();
           this.collapseSubMenu(parentItem);
         } else {
           this.getNextSibling(current)?.focus();
@@ -221,7 +221,7 @@ export class Menu {
           const parentItem = this.getSubMenuTrigger(current);
           const parentSiblings = this.getSiblings(parentItem);
           const currentIndex = Array.from(parentSiblings).indexOf(parentItem);
-          parentSiblings[currentIndex - 1]?.focus();
+          (parentSiblings[currentIndex - 1] ?? parentItem).focus();
           this.collapseSubMenu(parentItem);
         } else {
           this.getPreviousSibling(current)?.focus();
