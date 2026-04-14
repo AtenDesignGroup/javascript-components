@@ -1,6 +1,6 @@
 {
   "name": "@atendesign/javascript-components",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "A collection of JavaScript libraries that adhere ceremoniously with WCAG guidelines.",
   "scope": "atendesign",
   "main": "dist/javascript-components.umd.js",
