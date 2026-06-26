@@ -48,19 +48,30 @@ export class Sticky {
       this.parent.style.position = 'relative';
     }
 
-    // Cache layout values *before* any sticky class is applied so that
-    // toggling position doesn't feed back into the measurements.
-    this.elHeight = this.element.offsetHeight;
+    // Cache elOffsetTop before any sticky class is applied so the natural
+    // layout position is captured; elHeight is read live in update() instead.
     this.elOffsetTop = this.element.offsetTop;
 
     // Prevent the parent from collapsing when the child becomes absolute.
     this.parent.style.minHeight = `${this.parent.offsetHeight}px`;
 
-    // Cache the parent's document-relative top once and refresh on resize.
+    // Cache the parent's document-relative top once; refresh on layout change.
     this._cacheParentTop();
-    this._resizeObserver = new ResizeObserver(() => this.update());
+    this._resizeObserver = new ResizeObserver(() => {
+      this._cacheParentTop();
+      // Update elOffsetTop only when not stuck to avoid positional feedback.
+      if (this.currentState !== 'stuck') {
+        this.elOffsetTop = this.element.offsetTop;
+      }
+      // Refresh minHeight only in default state so it doesn't fight itself.
+      if (this.currentState === 'default') {
+        this.parent.style.minHeight = `${this.parent.offsetHeight}px`;
+      }
+      this.update();
+    });
     this._resizeObserver.observe(this.parent);
     this._resizeObserver.observe(document.documentElement);
+    this._resizeObserver.observe(this.element);
 
     window.addEventListener('scroll', this.onScroll, { passive: true });
     
@@ -111,13 +122,13 @@ export class Sticky {
    * @return {void}
    */
   update() {
-    const parentTop = this._cacheParentTop();
+    const elHeight = this.element.offsetHeight;
 
     // The scroll-Y at which the element should start sticking.
-    const startStick = parentTop + this.elOffsetTop - this.options.topSpacing;
+    const startStick = this.parentTop + this.elOffsetTop - this.options.topSpacing;
     // The scroll-Y at which the element should anchor to the bottom.
     const endStick =
-      parentTop + this.parent.offsetHeight - this.elHeight - this.options.topSpacing;
+      this.parentTop + this.parent.offsetHeight - elHeight - this.options.topSpacing;
 
     const scrollY = window.scrollY;
 
@@ -133,7 +144,7 @@ export class Sticky {
       this.applyState('bottom');
     } else {
       // In the sticky zone — track viewport via absolute top.
-      const top = scrollY - parentTop + this.options.topSpacing;
+      const top = scrollY - this.parentTop + this.options.topSpacing;
       this.applyState('stuck', top);
     }
 
@@ -156,11 +167,12 @@ export class Sticky {
   };
 
   /**
-   * Calculates the top offset of the parent element relative to the document.
+   * Caches the parent element's top offset relative to the document into `this.parentTop`.
+   * Should be called at mount and in the ResizeObserver callback, not on every scroll tick.
    *
-   * @return {number} The top offset of the parent element in pixels.
+   * @return {void}
    */
   _cacheParentTop() {
-    return this.parent.getBoundingClientRect().top + window.scrollY;
+    this.parentTop = this.parent.getBoundingClientRect().top + window.scrollY;
   }
 }
