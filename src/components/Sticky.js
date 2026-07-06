@@ -87,6 +87,15 @@ export class Sticky {
   destroy() {
     window.removeEventListener('scroll', this.onScroll);
     this._resizeObserver?.disconnect();
+
+    // Reset inline styles applied by mount() and applyState()
+    this.element.style.top = '';
+    this.element.classList.remove(this.stuckClass, this.bottomClass);
+    if (this.parent) {
+      this.parent.style.position = '';
+      this.parent.style.minHeight = '';
+    }
+    this.currentState = 'default';
   }
 
   /**
