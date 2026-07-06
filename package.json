@@ -1,6 +1,6 @@
 {
   "name": "@atendesign/javascript-components",
-  "version": "1.3.4",
+  "version": "1.3.5",
   "description": "A collection of JavaScript libraries that adhere ceremoniously with WCAG guidelines.",
   "scope": "atendesign",
   "main": "dist/javascript-components.umd.js",
@@ -26,7 +26,8 @@
     "./components/Accordion": "./src/components/Accordion.js",
     "./components/Menu": "./src/components/Menu.js",
     "./components/Modal": "./src/components/Modal.js",
-    "./components/TabContent": "./src/components/TabContent.js"
+    "./components/TabContent": "./src/components/TabContent.js",
+    "./components/Sticky": "./src/components/Sticky.js"
   },
   "author": "Philip Stier",
   "devDependencies": {
