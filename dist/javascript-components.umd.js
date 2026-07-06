@@ -1333,6 +1333,15 @@
         var _this$_resizeObserver;
         window.removeEventListener('scroll', this.onScroll);
         (_this$_resizeObserver = this._resizeObserver) === null || _this$_resizeObserver === void 0 || _this$_resizeObserver.disconnect();
+
+        // Reset inline styles applied by mount() and applyState()
+        this.element.style.top = '';
+        this.element.classList.remove(this.stuckClass, this.bottomClass);
+        if (this.parent) {
+          this.parent.style.position = '';
+          this.parent.style.minHeight = '';
+        }
+        this.currentState = 'default';
       }
 
       /**
