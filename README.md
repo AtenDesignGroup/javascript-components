@@ -129,9 +129,7 @@ accordionComponent.init();
             id="tab-tab-content-01"
             class="tab-content__trigger is-expanded"
             role="tab"
-            aria-haspopup="true"
             aria-selected="true"
-            aria-expanded="true"
             aria-controls="tab-content-01">
       Tab 01
     </button>
@@ -163,8 +161,13 @@ document.addEventListener('DOMContentLoaded', function() {
 | `selectors.navigation` | string  | `'.tab-content__navigation'` | CSS selector for desktop tab navigation container   |
 | `selectors.group`      | string  | `'.tab-content__group'`      | CSS selector for tab groups                         |
 | `selectors.trigger`    | string  | `'.tab-content__trigger'`    | CSS selector for tab trigger buttons                |
+| `selectors.content`    | string  | `'.tab-content__content'`    | Content within a group; see markup requirements below |
 | `classes.expanded`     | string  | `'is-expanded'`              | CSS class applied to expanded tabs/groups           |
-| `breakpoint`           | number  | `768`                        | Media breakpoint where tabs switch to accordions    |
+| `breakpoint`           | number  | `768`                        | Minimum viewport width for tabs, inclusive; smaller widths use accordions. Fractional values are preserved |
+| `orientation`          | string  | `'horizontal'`               | `'horizontal'` uses Left/Right, `'vertical'` uses Up/Down. If omitted, an authored navigation `aria-orientation` is honored |
+| `accordion.singleOpen` | boolean | `false`                      | Open at most one accordion item |
+| `accordion.collapsible` | boolean | `true`                      | Allow closing the last open item (including in single-open mode) |
+| `onChange`             | function or null | `null`               | Called after initialization, selection/open-state changes, layout transitions, and destroy |
 
 ### Custom Options Example
 
@@ -184,24 +187,129 @@ const tabContentComponent = new TabContent(tabContentElement, {
 tabContentComponent.init();
 ```
 
-### Required HTML Attributes
+### Markup, Accessibility, and Compatibility
 
-- `role="tablist"` on tab container
-- `role="tab"` on each tab button
-- `role="tabpanel"` on each content panel
-- `aria-selected` on tab buttons (automatically managed by the component)
-- `aria-controls` on tab buttons (must match panel's ID)
-- `id` on content panels (must match tab's aria-controls value)
-- `aria-labelledby` on content panels (must match tab button's ID)
-- `tabindex` on tab buttons (automatically managed by the component)
+Each trigger must be a native `<button>` with a unique `id` and an
+`aria-controls` value matching its group's unique `id`. Include one navigation
+container and one group per trigger. Nested selector and accordion options are
+merged with defaults.
+
+The component manages roles, ARIA relationships, `tabindex`, `hidden`, and the
+expanded class. In tabs mode, triggers move into the tablist, exactly one is
+selected, and only its labelled tabpanel is visible. In accordion mode, triggers
+return to their groups as native buttons (not tabs), with `aria-expanded` and
+`aria-controls` pointing to labelled content regions. A non-collapsible last
+open button has `aria-disabled="true"` but remains focusable.
+
+If a group's only content besides its trigger is `selectors.content`, that
+element becomes the accordion region. Otherwise, a temporary wrapper holds all
+non-trigger content so collapsing it never hides the button. The wrapper and
+generated IDs are removed on destroy. Do not depend on that internal wrapper.
+Styles must respect `[hidden]` (do not override it with `display: block`); use
+`[hidden] { display: none !important; }` if your CSS overrides browser defaults.
+The library does not style horizontal or vertical layout.
+
+Desktop initialization still selects the first tab. Mobile initialization
+preserves authored expanded classes; `singleOpen` normalizes multiple open items
+to the first, and `collapsible: false` opens the first if none was authored open.
+Switching layouts preserves the most recently active open item instead of
+resetting to the first tab. Returning to tabs reduces multiple open items to
+that item; returning to accordion keeps it open. If all items were closed,
+returning to tabs selects the last active item. Focus is retained on the same
+control/content where possible; focus in a panel that becomes hidden moves to
+its associated tab. Focus outside the component is not stolen.
+
+The default breakpoint remains **tabs at 768px and above**, preserving existing
+consumers. For **accordion at 768px and below**, use **`breakpoint: 768.0001`**:
+768px is accordion, 768.0001px and above are tabs. Fractional breakpoints use an
+exact viewport comparison plus a resize listener because some browsers round
+fractional media queries. Use matching layout CSS, and avoid relying solely on
+`min-width: 768.0001px` CSS queries in browsers that round that threshold. For
+the playlist boundary, range queries avoid that rounding:
+
+```css
+.tab-content [hidden] { display: none !important; }
+
+@media (width > 768px) {
+  .tab-content__navigation {
+    display: flex;
+    flex-direction: column; /* Pair with orientation: 'vertical'. */
+  }
+}
+```
+
+By default horizontal navigation, manual activation, multiple-open accordions,
+and collapsing all accordion items remain supported. `init()` is idempotent;
+`destroy()` removes listeners and restores authored attributes, expanded classes,
+trigger locations, and generated markup. The same instance can be initialized
+again. Destroy a Drupal behavior's instance on `detach(..., 'unload')`.
+Malformed options or trigger/group relationships throw descriptive errors before
+the component changes the DOM. An empty component is a no-op.
 
 ### Keyboard Support
 
-- `Arrow Left/Right`: Navigate between tabs
+- `Arrow Left/Right`: Move focus between horizontal tabs, wrapping at either end
+- `Arrow Up/Down`: Move focus between vertical tabs, wrapping at either end
 - `Home`: Move to first tab
 - `End`: Move to last tab
-- `Enter` or `Space`: Activate focused tab
-- Mouse click: Activate tab
+- `Enter` or `Space`: Activate the focused tab, or toggle an accordion item
+- Mouse click: Activate a tab or toggle an accordion item
+
+Arrow/Home/End navigation is manual activation: it changes the roving tab stop
+without changing selection. Only keys handled in the current mode/orientation
+prevent default scrolling. Accordion buttons participate in the normal Tab order.
+
+### Public State and Video Playlist Example
+
+`getState()` returns a fresh snapshot. `onChange(change)` receives the same
+fields plus a `reason` of `'init'`, `'interaction'`, `'breakpoint'`, or `'destroy'`.
+It runs synchronously **after** DOM state and focus are updated; duplicate
+initialization, unchanged layout, blocked collapse, clicking an already selected
+tab, and focus-only arrow navigation do not notify.
+
+| Field | Meaning |
+|-------|---------|
+| `mode` | `'tabs'`, `'accordion'`, or `null` after destroy |
+| `activeIndex` | Zero-based active item, or `null` when all are closed/destroyed |
+| `openIndices` | Sorted zero-based open item indices (one in tabs mode) |
+| `items` | `{ index, id, trigger, panel, open }` for every item; `id` is the stable group ID, `panel` is the currently controlled content element |
+
+Snapshots have independent arrays/item records; the DOM references are live.
+Treat snapshots as read-only. On destroy, all items report `open: false`,
+allowing consumers to dispose of expensive content; subsequent `getState()`
+returns an empty `items` array. No callback is required for ordinary consumers.
+
+With an inert `<template data-video-template>` and a `<div data-video-player>`
+inside each panel, a Drupal integration can manage iframes without inspecting
+private fields, expanded classes, or generated structure:
+
+```javascript
+import { TabContent } from '@atendesign/javascript-components';
+
+const playlist = new TabContent(playlistElement, {
+  orientation: 'vertical',
+  breakpoint: 768.0001,
+  accordion: { singleOpen: true, collapsible: true },
+  onChange({ items }) {
+    items.forEach(({ panel, open }) => {
+      const player = panel.querySelector('[data-video-player]');
+      const template = panel.querySelector('[data-video-template]');
+      if (!open) {
+        player.replaceChildren(); // Remove hidden video iframes.
+      } else if (!player.hasChildNodes()) {
+        player.append(template.content.cloneNode(true));
+      }
+    });
+  },
+});
+playlist.init();
+// On Drupal unload/detach:
+// playlist.destroy();
+```
+
+Keep the player and its template within the same content region. Use Drupal's
+`once()` and an instance map to pair attach/detach; no additional click or media
+query listeners are needed for player lifecycle.
 
 ## Menu
 

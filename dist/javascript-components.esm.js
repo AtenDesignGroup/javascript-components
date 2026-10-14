@@ -1,3 +1,14 @@
+function _arrayLikeToArray(r, a) {
+  (null == a || a > r.length) && (a = r.length);
+  for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
+  return n;
+}
+function _arrayWithHoles(r) {
+  if (Array.isArray(r)) return r;
+}
+function _arrayWithoutHoles(r) {
+  if (Array.isArray(r)) return _arrayLikeToArray(r);
+}
 function _classCallCheck(a, n) {
   if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function");
 }
@@ -20,6 +31,39 @@ function _defineProperty(e, r, t) {
     writable: true
   }) : e[r] = t, e;
 }
+function _iterableToArray(r) {
+  if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
+}
+function _iterableToArrayLimit(r, l) {
+  var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+  if (null != t) {
+    var e,
+      n,
+      i,
+      u,
+      a = [],
+      f = true,
+      o = false;
+    try {
+      if (i = (t = t.call(r)).next, 0 === l) ; else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0);
+    } catch (r) {
+      o = true, n = r;
+    } finally {
+      try {
+        if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return;
+      } finally {
+        if (o) throw n;
+      }
+    }
+    return a;
+  }
+}
+function _nonIterableRest() {
+  throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+}
+function _nonIterableSpread() {
+  throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+}
 function ownKeys(e, r) {
   var t = Object.keys(e);
   if (Object.getOwnPropertySymbols) {
@@ -41,6 +85,12 @@ function _objectSpread2(e) {
   }
   return e;
 }
+function _slicedToArray(r, e) {
+  return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest();
+}
+function _toConsumableArray(r) {
+  return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread();
+}
 function _toPrimitive(t, r) {
   if ("object" != typeof t || !t) return t;
   var e = t[Symbol.toPrimitive];
@@ -54,6 +104,13 @@ function _toPrimitive(t, r) {
 function _toPropertyKey(t) {
   var i = _toPrimitive(t, "string");
   return "symbol" == typeof i ? i : i + "";
+}
+function _unsupportedIterableToArray(r, a) {
+  if (r) {
+    if ("string" == typeof r) return _arrayLikeToArray(r, a);
+    var t = {}.toString.call(r).slice(8, -1);
+    return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0;
+  }
 }
 
 /**
@@ -916,305 +973,419 @@ var Modal = /*#__PURE__*/function () {
 /**
  * @file
  * Components - Tab Content
- * Functionality for a Tab Content component using accessible methods as described by WCAG: https://www.w3.org/WAI/ARIA/apg/patterns/tabs
- */
-
-/**
- * Represents a Tab Content component with event handling and state management
- * for tab navigation. On desktop viewports the triggers are collected into a
- * navigation bar; on mobile they revert to an accordion-style layout within
- * each content group.
+ * Accessible, manually activated tabs with a responsive accordion layout.
  */
 var TabContent = /*#__PURE__*/function () {
   function TabContent(element) {
-    var _options$selectors, _options$classes;
+    var _options$selectors, _options$classes, _options$accordion, _this$navigation;
     var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
     _classCallCheck(this, TabContent);
-    // Default options
     var defaultOptions = {
       selectors: {
         navigation: '.tab-content__navigation',
         group: '.tab-content__group',
-        trigger: '.tab-content__trigger'
+        trigger: '.tab-content__trigger',
+        content: '.tab-content__content'
       },
       classes: {
         expanded: 'is-expanded'
       },
-      breakpoint: 768
+      breakpoint: 768,
+      orientation: 'horizontal',
+      accordion: {
+        singleOpen: false,
+        collapsible: true
+      },
+      onChange: null
     };
-
-    // Deep merge for nested options
     this.options = _objectSpread2(_objectSpread2(_objectSpread2({}, defaultOptions), options), {}, {
       selectors: _objectSpread2(_objectSpread2({}, defaultOptions.selectors), (_options$selectors = options.selectors) !== null && _options$selectors !== void 0 ? _options$selectors : {}),
-      classes: _objectSpread2(_objectSpread2({}, defaultOptions.classes), (_options$classes = options.classes) !== null && _options$classes !== void 0 ? _options$classes : {})
+      classes: _objectSpread2(_objectSpread2({}, defaultOptions.classes), (_options$classes = options.classes) !== null && _options$classes !== void 0 ? _options$classes : {}),
+      accordion: _objectSpread2(_objectSpread2({}, defaultOptions.accordion), (_options$accordion = options.accordion) !== null && _options$accordion !== void 0 ? _options$accordion : {})
     });
     this.element = element;
     this.expandedClass = this.options.classes.expanded;
-    this.navigation = this.element.querySelector(this.options.selectors.navigation);
-    this.groups = this.element.querySelectorAll(this.options.selectors.group);
-    this.triggers = this.element.querySelectorAll(this.options.selectors.trigger);
+    this.navigation = element.querySelector(this.options.selectors.navigation);
+    if (options.orientation === undefined && (_this$navigation = this.navigation) !== null && _this$navigation !== void 0 && _this$navigation.hasAttribute('aria-orientation')) {
+      this.options.orientation = this.navigation.getAttribute('aria-orientation');
+    }
+    this.groups = element.querySelectorAll(this.options.selectors.group);
+    this.triggers = element.querySelectorAll(this.options.selectors.trigger);
     this.mediaQuery = null;
     this.state = null;
-
-    // Store bound handler references for cleanup
+    this.initialized = false;
+    this.items = [];
+    this.openIndices = new Set();
+    this.activeIndex = 0;
+    this.focusIndex = 0;
+    this._snapshots = [];
     this._onTriggerClick = this.onTriggerClick.bind(this);
     this._onTriggerKeydown = this.onTriggerKeydown.bind(this);
     this._onMediaQueryChange = this.onMediaQueryChange.bind(this);
   }
-
-  // LIFECYCLE
-
-  /**
-   * Initializes the tab content component by attaching event listeners to each
-   * trigger and setting up the responsive media query. Exits early per-trigger
-   * if no triggers are found.
-   *
-   * @return {void} Does not return any value.
-   */
   return _createClass(TabContent, [{
     key: "init",
     value: function init() {
       var _this = this;
+      if (this.initialized) return;
+      if (!Number.isFinite(this.options.breakpoint) || this.options.breakpoint < 0) {
+        throw new TypeError('TabContent: breakpoint must be a finite, non-negative number.');
+      }
+      if (!['horizontal', 'vertical'].includes(this.options.orientation)) {
+        throw new TypeError('TabContent: orientation must be horizontal or vertical.');
+      }
+      if (this.options.onChange !== null && typeof this.options.onChange !== 'function') {
+        throw new TypeError('TabContent: onChange must be a function or null.');
+      }
+      if (typeof this.options.accordion.singleOpen !== 'boolean' || typeof this.options.accordion.collapsible !== 'boolean') {
+        throw new TypeError('TabContent: accordion options must be booleans.');
+      }
+      if (!this.triggers.length) return;
+      if (!this.navigation) throw new Error('TabContent: a navigation container is required.');
+      var groups = Array.from(this.groups);
+      var controlledGroups = Array.from(this.triggers, function (trigger) {
+        return _this.getControlledByID(trigger);
+      });
+      if (controlledGroups.some(function (group) {
+        return !groups.includes(group);
+      }) || new Set(controlledGroups).size !== groups.length || controlledGroups.length !== groups.length || new Set(Array.from(this.triggers, function (trigger) {
+        return trigger.id;
+      })).size !== this.triggers.length || Array.from(this.triggers).some(function (trigger) {
+        return trigger.tagName !== 'BUTTON' || !trigger.id;
+      })) {
+        throw new Error('TabContent: each button needs an ID and must control a distinct group.');
+      }
+      this._remember(this.navigation, ['role', 'aria-orientation', 'hidden']);
+      this.items = Array.from(this.triggers, function (trigger, index) {
+        var group = controlledGroups[index];
+        _this._remember(group, ['role', 'aria-labelledby', 'hidden', 'tabindex']);
+        _this._remember(trigger, ['role', 'aria-selected', 'aria-expanded', 'aria-controls', 'aria-haspopup', 'aria-disabled', 'tabindex', 'type']);
+        var location = {
+          parent: trigger.parentNode,
+          next: trigger.nextSibling
+        };
+        var panel = group.querySelector(_this.options.selectors.content);
+        var contentNodes = Array.from(group.childNodes).filter(function (node) {
+          return node !== trigger;
+        });
+        var onlyContent = panel && contentNodes.every(function (node) {
+          return node === panel || node.nodeType === 3 && !node.textContent.trim();
+        });
+        var generated = !onlyContent;
+        if (generated) {
+          panel = group.ownerDocument.createElement('div');
+          contentNodes.forEach(function (node) {
+            return panel.append(node);
+          });
+          group.append(panel);
+        }
+        _this._remember(panel, ['id', 'role', 'aria-labelledby', 'hidden']);
+        if (!panel.id) {
+          var id = "".concat(group.id, "-content");
+          while (group.ownerDocument.getElementById(id)) id += '-panel';
+          panel.id = id;
+        }
+        return {
+          trigger: trigger,
+          group: group,
+          panel: panel,
+          location: location,
+          generated: generated
+        };
+      });
+      this.activeIndex = 0;
+      this.focusIndex = 0;
+      // Desktop has always started on the first tab; mobile keeps authored open state.
+      this.openIndices = new Set(this.items.flatMap(function (_ref, index) {
+        var trigger = _ref.trigger,
+          group = _ref.group;
+        return _this.containsExpandedClass(trigger) || _this.containsExpandedClass(group) ? [index] : [];
+      }));
+      this.mediaQuery = window.matchMedia("(min-width: ".concat(this.options.breakpoint, "px)"));
+      this.initialized = true;
       this.triggers.forEach(function (trigger) {
         trigger.addEventListener('click', _this._onTriggerClick);
         trigger.addEventListener('keydown', _this._onTriggerKeydown);
       });
-
-      // Device or viewport change listener and on load.
-      this.mediaQuery = window.matchMedia("(min-width: ".concat(this.options.breakpoint, "px)"));
       this.mediaQuery.addEventListener('change', this._onMediaQueryChange);
-      this._onMediaQueryChange();
+      if (!Number.isInteger(this.options.breakpoint)) {
+        window.addEventListener('resize', this._onMediaQueryChange);
+      }
+      this.onMediaQueryChange();
     }
-
-    /**
-     * Removes all event listeners attached by `init()`, cleaning up the instance
-     * so it can be safely discarded or re-initialized.
-     *
-     * @return {void} Does not return any value.
-     */
   }, {
     key: "destroy",
     value: function destroy() {
       var _this2 = this;
-      if (this.triggers) {
-        this.triggers.forEach(function (trigger) {
-          trigger.removeEventListener('click', _this2._onTriggerClick);
-          trigger.removeEventListener('keydown', _this2._onTriggerKeydown);
+      if (!this.initialized) return;
+      this.triggers.forEach(function (trigger) {
+        trigger.removeEventListener('click', _this2._onTriggerClick);
+        trigger.removeEventListener('keydown', _this2._onTriggerKeydown);
+      });
+      this.mediaQuery.removeEventListener('change', this._onMediaQueryChange);
+      window.removeEventListener('resize', this._onMediaQueryChange);
+      var focused = this.element.ownerDocument.activeElement;
+      this.items.forEach(function (_ref2) {
+        var panel = _ref2.panel,
+          generated = _ref2.generated;
+        if (generated) panel.replaceWith.apply(panel, _toConsumableArray(panel.childNodes));
+      });
+      this.items.slice().reverse().forEach(function (_ref3) {
+        var trigger = _ref3.trigger,
+          location = _ref3.location;
+        location.parent.insertBefore(trigger, location.next);
+      });
+      this._snapshots.forEach(function (_ref4) {
+        var element = _ref4.element,
+          attributes = _ref4.attributes,
+          expanded = _ref4.expanded;
+        attributes.forEach(function (_ref5) {
+          var _ref6 = _slicedToArray(_ref5, 2),
+            name = _ref6[0],
+            value = _ref6[1];
+          if (value === null) element.removeAttribute(name);else element.setAttribute(name, value);
         });
+        element.classList.toggle(_this2.expandedClass, expanded);
+      });
+      if (this.element.contains(focused) && focused !== this.element.ownerDocument.activeElement) {
+        focused.focus();
       }
-      if (this.mediaQuery) {
-        this.mediaQuery.removeEventListener('change', this._onMediaQueryChange);
-      }
+      this.initialized = false;
+      this.mediaQuery = null;
+      this.state = null;
+      this.openIndices.clear();
+      var snapshot = this.getState();
+      this.items = [];
+      this._snapshots = [];
+      this._notify('destroy', snapshot);
     }
-
-    // STATE
-
-    /**
-     * Collapses the specified trigger element, updating its ARIA attributes and CSS classes.
-     *
-     * @param {HTMLElement} element - The trigger element to collapse.
-     * @return {void} Does not return any value.
-     */
+  }, {
+    key: "_remember",
+    value: function _remember(element, names) {
+      this._snapshots.push({
+        element: element,
+        attributes: names.map(function (name) {
+          return [name, element.getAttribute(name)];
+        }),
+        expanded: this.containsExpandedClass(element)
+      });
+    }
   }, {
     key: "collapseTrigger",
     value: function collapseTrigger(element) {
       element.classList.remove(this.expandedClass);
-      element.setAttribute('aria-selected', 'false');
-      element.setAttribute('aria-expanded', 'false');
       if (this.state === 'desktop') {
+        element.setAttribute('aria-selected', 'false');
         element.setAttribute('tabindex', '-1');
+      } else {
+        element.setAttribute('aria-expanded', 'false');
       }
     }
-
-    /**
-     * Expands the specified trigger element, updating its ARIA attributes and CSS classes.
-     *
-     * @param {HTMLElement} element - The trigger element to expand.
-     * @return {void} Does not return any value.
-     */
   }, {
     key: "expandTrigger",
     value: function expandTrigger(element) {
       element.classList.add(this.expandedClass);
-      element.setAttribute('aria-selected', 'true');
-      element.setAttribute('aria-expanded', 'true');
       if (this.state === 'desktop') {
-        element.removeAttribute('tabindex');
+        element.setAttribute('aria-selected', 'true');
+        element.setAttribute('tabindex', '0');
+      } else {
+        element.setAttribute('aria-expanded', 'true');
       }
     }
-
-    // EVENT HANDLERS
-
-    /**
-     * Handles changes in media query state and repositions triggers between the
-     * navigation bar (desktop) and their individual content groups (mobile).
-     *
-     * @return {void} Does not return any value.
-     */
   }, {
     key: "onMediaQueryChange",
     value: function onMediaQueryChange() {
-      var _this3 = this;
-      if (this.mediaQuery.matches) {
-        this.state = 'desktop';
-        this.triggers.forEach(function (trigger, index) {
-          if (_this3.navigation) _this3.navigation.append(trigger);
-          if (index !== 0) {
-            _this3.collapseTrigger(trigger);
-            _this3.groups[index].classList.remove(_this3.expandedClass);
-          } else {
-            _this3.expandTrigger(trigger);
-            _this3.groups[0].classList.add(_this3.expandedClass);
-          }
-        });
+      if (!this.initialized) return;
+      // Some engines round fractional media queries down, including 768.0001px.
+      var desktop = Number.isInteger(this.options.breakpoint) ? this.mediaQuery.matches : window.innerWidth >= this.options.breakpoint;
+      var nextState = desktop ? 'desktop' : 'mobile';
+      if (nextState === this.state) return;
+      var initial = this.state === null;
+      var focused = this.element.ownerDocument.activeElement;
+      var focusedItem = this.items.findIndex(function (_ref7) {
+        var trigger = _ref7.trigger,
+          group = _ref7.group;
+        return trigger === focused || group.contains(focused);
+      });
+      this.state = nextState;
+      if (this.state === 'desktop') {
+        if (!initial && !this.openIndices.has(this.activeIndex) && this.openIndices.size) {
+          this.activeIndex = this.openIndices.values().next().value;
+        }
+        this.openIndices = new Set([this.activeIndex]);
+        this.focusIndex = focusedItem >= 0 ? focusedItem : this.activeIndex;
       } else {
-        this.state = 'mobile';
-        this.triggers.forEach(function (trigger, index) {
-          _this3.groups[index].prepend(trigger);
-          trigger.removeAttribute('tabindex');
-        });
+        if (initial && this.openIndices.size) this.activeIndex = this.openIndices.values().next().value;
+        if (this.options.accordion.singleOpen && this.openIndices.size > 1) {
+          this.openIndices = new Set([this.activeIndex]);
+        }
+        if (!this.options.accordion.collapsible && !this.openIndices.size) {
+          this.openIndices.add(this.activeIndex);
+        }
       }
+      this._render();
+      if (focusedItem >= 0) {
+        var _this$items$focusedIt = this.items[focusedItem],
+          trigger = _this$items$focusedIt.trigger,
+          group = _this$items$focusedIt.group;
+        var hidden = group.hidden || this.items[focusedItem].panel.hidden;
+        if (hidden || focused === trigger) trigger.focus();else if (focused !== this.element.ownerDocument.activeElement) focused.focus();
+      }
+      this._notify(initial ? 'init' : 'breakpoint');
     }
-
-    /**
-     * Handles click events on a trigger element. On desktop, switches to the
-     * clicked tab; on mobile, toggles the associated content group like an accordion.
-     *
-     * @param {MouseEvent} event - The click event fired on the trigger.
-     * @return {void} Does not return any value.
-     */
+  }, {
+    key: "_render",
+    value: function _render() {
+      var _this3 = this;
+      var desktop = this.state === 'desktop';
+      this.navigation.hidden = !desktop;
+      if (desktop) {
+        this.navigation.setAttribute('role', 'tablist');
+        this.navigation.setAttribute('aria-orientation', this.options.orientation);
+      } else {
+        this.navigation.removeAttribute('role');
+        this.navigation.removeAttribute('aria-orientation');
+      }
+      this.items.forEach(function (_ref8, index) {
+        var trigger = _ref8.trigger,
+          group = _ref8.group,
+          panel = _ref8.panel;
+        var open = _this3.openIndices.has(index);
+        trigger.setAttribute('type', 'button');
+        trigger.removeAttribute('aria-haspopup');
+        trigger.removeAttribute('aria-disabled');
+        group.classList.toggle(_this3.expandedClass, open);
+        if (desktop) {
+          if (trigger.parentNode !== _this3.navigation) _this3.navigation.append(trigger);
+          group.setAttribute('role', 'tabpanel');
+          group.setAttribute('aria-labelledby', trigger.id);
+          group.setAttribute('tabindex', '0');
+          group.hidden = !open;
+          panel.hidden = false;
+          panel.removeAttribute('role');
+          panel.removeAttribute('aria-labelledby');
+          trigger.setAttribute('role', 'tab');
+          trigger.setAttribute('aria-controls', group.id);
+          trigger.removeAttribute('aria-expanded');
+        } else {
+          if (trigger.parentNode !== group) group.prepend(trigger);
+          group.removeAttribute('role');
+          group.removeAttribute('aria-labelledby');
+          group.removeAttribute('tabindex');
+          group.hidden = false;
+          panel.hidden = !open;
+          panel.setAttribute('role', 'region');
+          panel.setAttribute('aria-labelledby', trigger.id);
+          trigger.removeAttribute('role');
+          trigger.removeAttribute('aria-selected');
+          trigger.removeAttribute('tabindex');
+          trigger.setAttribute('aria-controls', panel.id);
+          if (open && !_this3.options.accordion.collapsible && _this3.openIndices.size === 1) {
+            trigger.setAttribute('aria-disabled', 'true');
+          }
+        }
+        if (open) _this3.expandTrigger(trigger);else _this3.collapseTrigger(trigger);
+        if (desktop) trigger.setAttribute('tabindex', index === _this3.focusIndex ? '0' : '-1');
+      });
+    }
   }, {
     key: "onTriggerClick",
     value: function onTriggerClick(event) {
-      var _this4 = this;
-      var controlledGroup = this.getControlledByID(event.currentTarget);
+      var index = Array.from(this.triggers).indexOf(event.currentTarget);
       if (this.state === 'desktop') {
-        if (!this.containsExpandedClass(event.currentTarget) && !this.containsExpandedClass(controlledGroup)) {
-          this.triggers.forEach(function (trigger) {
-            _this4.collapseTrigger(trigger);
-          });
-          this.groups.forEach(function (group) {
-            group.classList.remove(_this4.expandedClass);
-          });
-          this.expandTrigger(event.currentTarget);
-          controlledGroup.classList.add(this.expandedClass);
+        if (index === this.activeIndex) {
+          this.focusIndex = index;
+          this._render();
+          return;
         }
-      }
-      if (this.state === 'mobile') {
-        if (this.containsExpandedClass(event.currentTarget)) {
-          this.collapseTrigger(event.currentTarget);
-          controlledGroup.classList.remove(this.expandedClass);
-        } else {
-          this.expandTrigger(event.currentTarget);
-          controlledGroup.classList.add(this.expandedClass);
+        this.activeIndex = index;
+        this.focusIndex = index;
+        this.openIndices = new Set([index]);
+      } else if (this.openIndices.has(index)) {
+        if (!this.options.accordion.collapsible && this.openIndices.size === 1) return;
+        this.openIndices.delete(index);
+        if (index === this.activeIndex && this.openIndices.size) {
+          this.activeIndex = this.openIndices.values().next().value;
         }
+      } else {
+        if (this.options.accordion.singleOpen) this.openIndices.clear();
+        this.openIndices.add(index);
+        this.activeIndex = index;
       }
+      this._render();
+      this._notify('interaction');
     }
-
-    /**
-     * Handles keydown events on a trigger element. On desktop, `Enter`/`Space`
-     * activates the tab and arrow/Home/End keys navigate between tabs. On mobile,
-     * `Enter`/`Space` toggles the accordion group.
-     *
-     * @param {KeyboardEvent} event - The keydown event fired on the trigger.
-     * @return {void} Does not return any value.
-     */
   }, {
     key: "onTriggerKeydown",
     value: function onTriggerKeydown(event) {
-      var _this5 = this;
-      var controlledGroup = this.getControlledByID(event.currentTarget);
-      if (this.state === 'desktop') {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          if (!this.containsExpandedClass(event.currentTarget) && !this.containsExpandedClass(controlledGroup)) {
-            this.triggers.forEach(function (trigger) {
-              _this5.collapseTrigger(trigger);
-            });
-            this.groups.forEach(function (element) {
-              element.classList.remove(_this5.expandedClass);
-            });
-            this.expandTrigger(event.currentTarget);
-            controlledGroup.classList.add(this.expandedClass);
-          }
-        }
-        if (event.key === 'ArrowLeft') {
-          event.preventDefault();
-          if (event.currentTarget === this.triggers[0]) {
-            setTimeout(function () {
-              _this5.triggers[_this5.triggers.length - 1].focus();
-            }, 1);
-          } else {
-            setTimeout(function () {
-              event.target.previousElementSibling.focus();
-            }, 1);
-          }
-        }
-        if (event.key === 'ArrowRight') {
-          event.preventDefault();
-          if (event.currentTarget === this.triggers[this.triggers.length - 1]) {
-            setTimeout(function () {
-              _this5.triggers[0].focus();
-            }, 1);
-          } else {
-            setTimeout(function () {
-              event.target.nextElementSibling.focus();
-            }, 1);
-          }
-        }
-        if (event.key === 'Home') {
-          event.preventDefault();
-          setTimeout(function () {
-            _this5.triggers[0].focus();
-          }, 1);
-        }
-        if (event.key === 'End') {
-          event.preventDefault();
-          setTimeout(function () {
-            _this5.triggers[_this5.triggers.length - 1].focus();
-          }, 1);
-        }
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        this.onTriggerClick(event);
+        return;
       }
-      if (this.state === 'mobile') {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          if (this.containsExpandedClass(event.currentTarget)) {
-            this.collapseTrigger(event.currentTarget);
-            controlledGroup.classList.remove(this.expandedClass);
-          } else {
-            // Expand accordion.
-            this.expandTrigger(event.currentTarget);
-            controlledGroup.classList.add(this.expandedClass);
-          }
-        }
-      }
+      if (this.state !== 'desktop') return;
+      var index = Array.from(this.triggers).indexOf(event.currentTarget);
+      var previous = this.options.orientation === 'vertical' ? 'ArrowUp' : 'ArrowLeft';
+      var next = this.options.orientation === 'vertical' ? 'ArrowDown' : 'ArrowRight';
+      var target;
+      if (event.key === previous) target = (index + this.triggers.length - 1) % this.triggers.length;else if (event.key === next) target = (index + 1) % this.triggers.length;else if (event.key === 'Home') target = 0;else if (event.key === 'End') target = this.triggers.length - 1;else return;
+      event.preventDefault();
+      this.focusIndex = target;
+      this.triggers.forEach(function (trigger, triggerIndex) {
+        trigger.setAttribute('tabindex', triggerIndex === target ? '0' : '-1');
+      });
+      this.triggers[target].focus();
     }
 
-    // UTILITIES
-
     /**
-     * Returns whether the specified element contains the expanded class.
-     *
-     * @param {HTMLElement} target - The element to check.
-     * @return {boolean} `true` if the element has the expanded class, `false` otherwise.
+     * Returns a fresh public snapshot. Panel references are the controlled content
+     * for the current mode; consumers need not inspect generated markup.
      */
+  }, {
+    key: "getState",
+    value: function getState() {
+      var _this4 = this;
+      return {
+        mode: this.state === null ? null : this.state === 'desktop' ? 'tabs' : 'accordion',
+        activeIndex: this.openIndices.size ? this.activeIndex : null,
+        openIndices: Array.from(this.openIndices).sort(function (a, b) {
+          return a - b;
+        }),
+        items: this.items.map(function (_ref9, index) {
+          var trigger = _ref9.trigger,
+            group = _ref9.group,
+            panel = _ref9.panel;
+          return {
+            index: index,
+            id: group.id,
+            trigger: trigger,
+            panel: _this4.state === 'mobile' ? panel : group,
+            open: _this4.openIndices.has(index)
+          };
+        })
+      };
+    }
+  }, {
+    key: "_notify",
+    value: function _notify(reason) {
+      var snapshot = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.getState();
+      if (this.options.onChange) this.options.onChange(_objectSpread2(_objectSpread2({}, snapshot), {}, {
+        reason: reason
+      }));
+    }
   }, {
     key: "containsExpandedClass",
     value: function containsExpandedClass(target) {
       return target.classList.contains(this.expandedClass);
     }
-
-    /**
-     * Returns the element controlled by the given trigger's `aria-controls` attribute.
-     *
-     * @param {HTMLElement} target - The trigger element.
-     * @return {HTMLElement|null} The controlled element, or `null` if not found.
-     */
   }, {
     key: "getControlledByID",
     value: function getControlledByID(target) {
-      var controlID = target.getAttribute('aria-controls');
-      return this.element.querySelector("#".concat(controlID));
+      var _Array$from$find;
+      var id = target.getAttribute('aria-controls');
+      return (_Array$from$find = Array.from(this.element.querySelectorAll('[id]')).find(function (element) {
+        return element.id === id;
+      })) !== null && _Array$from$find !== void 0 ? _Array$from$find : null;
     }
   }]);
 }();
