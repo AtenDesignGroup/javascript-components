@@ -1,5 +1,21 @@
 # Release notes
 
+## 1.4.1
+
+### Documentation
+
+- Restore and expand TabContent DocBlocks for all methods, including the
+  constructor, with parameter, return, validation, and lifecycle documentation.
+- Document public state shapes and callback behavior with JSDoc typedefs.
+- Regenerate distribution bundles and source maps. Executable behavior and
+  public API are unchanged from 1.4.0.
+
+### Publishing
+
+The patch package version and Git tag are both `1.4.1`. If npm authentication
+is unavailable, an authorized maintainer must run `npm publish --access public`
+from this tagged commit.
+
 ## 1.4.0
 
 ### TabContent

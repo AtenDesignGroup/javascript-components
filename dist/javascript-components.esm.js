@@ -975,7 +975,49 @@ var Modal = /*#__PURE__*/function () {
  * Components - Tab Content
  * Accessible, manually activated tabs with a responsive accordion layout.
  */
+
+/**
+ * Public state for one tab or accordion item.
+ *
+ * @typedef {Object} TabContentItemState
+ * @property {number} index - Zero-based item index.
+ * @property {string} id - Stable ID of the item's group.
+ * @property {HTMLButtonElement} trigger - The item's activation button.
+ * @property {HTMLElement} panel - Currently controlled content, or the group after destroy.
+ * @property {boolean} open - Whether the item's content is open.
+ */
+
+/**
+ * Independent state records with live references to the component's DOM elements.
+ *
+ * @typedef {Object} TabContentState
+ * @property {'tabs'|'accordion'|null} mode - Current layout, or null when uninitialized.
+ * @property {number|null} activeIndex - Active item index, or null when no item is open.
+ * @property {number[]} openIndices - Sorted indices of open items.
+ * @property {TabContentItemState[]} items - State and DOM references for each item.
+ */
+
+/**
+ * Manages manually activated tabs and responsive accordion controls, preserving
+ * selection and focus while synchronizing accessible state with the DOM.
+ */
 var TabContent = /*#__PURE__*/function () {
+  /**
+   * Creates an instance without modifying the DOM or attaching listeners.
+   *
+   * @param {HTMLElement} element - Root containing the navigation, groups, and triggers.
+   * @param {Object} [options={}] - Selector, class, responsive, and state callback options.
+   * @param {Object} [options.selectors] - Selectors merged with the component defaults.
+   * @param {Object} [options.classes] - Class names merged with the component defaults.
+   * @param {number} [options.breakpoint=768] - Inclusive minimum viewport width for tabs.
+   * @param {'horizontal'|'vertical'} [options.orientation] - Keyboard orientation;
+   *   defaults to authored aria-orientation, then horizontal.
+   * @param {Object} [options.accordion] - Accordion behavior options.
+   * @param {boolean} [options.accordion.singleOpen=false] - Limit open accordion items to one.
+   * @param {boolean} [options.accordion.collapsible=true] - Allow closing the last open item.
+   * @param {function(TabContentState & {reason: string}): void|null} [options.onChange=null]
+   *   - Synchronous callback after committed state changes.
+   */
   function TabContent(element) {
     var _options$selectors, _options$classes, _options$accordion, _this$navigation;
     var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
@@ -1023,6 +1065,15 @@ var TabContent = /*#__PURE__*/function () {
     this._onTriggerKeydown = this.onTriggerKeydown.bind(this);
     this._onMediaQueryChange = this.onMediaQueryChange.bind(this);
   }
+
+  /**
+   * Validates configuration, snapshots authored DOM, and attaches interaction
+   * and responsive listeners. Repeated initialization and empty roots are no-ops.
+   *
+   * @throws {TypeError} If a supported option has an invalid value.
+   * @throws {Error} If navigation or trigger/group relationships are invalid.
+   * @return {void}
+   */
   return _createClass(TabContent, [{
     key: "init",
     value: function init() {
@@ -1113,6 +1164,14 @@ var TabContent = /*#__PURE__*/function () {
       }
       this.onMediaQueryChange();
     }
+
+    /**
+     * Removes listeners and generated markup, restores authored DOM and focus,
+     * and notifies consumers with closed item state for content cleanup.
+     * Repeated destruction is a no-op; the instance can be initialized again.
+     *
+     * @return {void}
+     */
   }, {
     key: "destroy",
     value: function destroy() {
@@ -1159,6 +1218,15 @@ var TabContent = /*#__PURE__*/function () {
       this._snapshots = [];
       this._notify('destroy', snapshot);
     }
+
+    /**
+     * Saves managed attributes and the expanded class for restoration on destroy.
+     *
+     * @private
+     * @param {HTMLElement} element - Element whose authored state must be preserved.
+     * @param {string[]} names - Attribute names to snapshot, including absent attributes.
+     * @return {void}
+     */
   }, {
     key: "_remember",
     value: function _remember(element, names) {
@@ -1170,6 +1238,14 @@ var TabContent = /*#__PURE__*/function () {
         expanded: this.containsExpandedClass(element)
       });
     }
+
+    /**
+     * Applies collapsed styling and mode-specific ARIA/focus state to a trigger.
+     * Does not change the open-item model or notify consumers.
+     *
+     * @param {HTMLButtonElement} element - Trigger to collapse.
+     * @return {void}
+     */
   }, {
     key: "collapseTrigger",
     value: function collapseTrigger(element) {
@@ -1181,6 +1257,14 @@ var TabContent = /*#__PURE__*/function () {
         element.setAttribute('aria-expanded', 'false');
       }
     }
+
+    /**
+     * Applies expanded styling and mode-specific ARIA/focus state to a trigger.
+     * Does not change the open-item model or notify consumers.
+     *
+     * @param {HTMLButtonElement} element - Trigger to expand.
+     * @return {void}
+     */
   }, {
     key: "expandTrigger",
     value: function expandTrigger(element) {
@@ -1192,6 +1276,14 @@ var TabContent = /*#__PURE__*/function () {
         element.setAttribute('aria-expanded', 'true');
       }
     }
+
+    /**
+     * Initializes or switches layouts using the configured breakpoint, preserving
+     * the active item and retaining focus or moving it out of hidden content.
+     * Unchanged layouts do not render or notify consumers.
+     *
+     * @return {void}
+     */
   }, {
     key: "onMediaQueryChange",
     value: function onMediaQueryChange() {
@@ -1233,6 +1325,14 @@ var TabContent = /*#__PURE__*/function () {
       }
       this._notify(initial ? 'init' : 'breakpoint');
     }
+
+    /**
+     * Synchronizes trigger locations, roles, relationships, visibility, expanded
+     * classes, and tab stops with the current layout and open-item model.
+     *
+     * @private
+     * @return {void}
+     */
   }, {
     key: "_render",
     value: function _render() {
@@ -1288,6 +1388,14 @@ var TabContent = /*#__PURE__*/function () {
         if (desktop) trigger.setAttribute('tabindex', index === _this3.focusIndex ? '0' : '-1');
       });
     }
+
+    /**
+     * Selects a tab or toggles an accordion item within configured constraints,
+     * then renders and notifies consumers when the open state changes.
+     *
+     * @param {MouseEvent|KeyboardEvent} event - Activation event whose currentTarget is a trigger.
+     * @return {void}
+     */
   }, {
     key: "onTriggerClick",
     value: function onTriggerClick(event) {
@@ -1315,6 +1423,15 @@ var TabContent = /*#__PURE__*/function () {
       this._render();
       this._notify('interaction');
     }
+
+    /**
+     * Activates with Enter/Space or moves tab focus with orientation-specific
+     * arrows and Home/End. Focus navigation leaves selection unchanged and only
+     * handled keys prevent the browser's default action.
+     *
+     * @param {KeyboardEvent} event - Key event from a trigger.
+     * @return {void}
+     */
   }, {
     key: "onTriggerKeydown",
     value: function onTriggerKeydown(event) {
@@ -1340,6 +1457,8 @@ var TabContent = /*#__PURE__*/function () {
     /**
      * Returns a fresh public snapshot. Panel references are the controlled content
      * for the current mode; consumers need not inspect generated markup.
+     *
+     * @return {TabContentState} Independent state arrays and records with live DOM references.
      */
   }, {
     key: "getState",
@@ -1365,6 +1484,17 @@ var TabContent = /*#__PURE__*/function () {
         })
       };
     }
+
+    /**
+     * Invokes the optional consumer callback after DOM and state updates.
+     * Callback errors propagate; teardown is complete before destroy notifications.
+     *
+     * @private
+     * @param {'init'|'interaction'|'breakpoint'|'destroy'} reason - Cause of the notification.
+     * @param {TabContentState} [snapshot=this.getState()] - State to deliver; destroy
+     *   supplies a final snapshot before clearing its item references.
+     * @return {void}
+     */
   }, {
     key: "_notify",
     value: function _notify(reason) {
@@ -1373,11 +1503,26 @@ var TabContent = /*#__PURE__*/function () {
         reason: reason
       }));
     }
+
+    /**
+     * Checks whether an element has the configured expanded class.
+     *
+     * @param {Element} target - Element to inspect.
+     * @return {boolean} Whether the expanded class is present.
+     */
   }, {
     key: "containsExpandedClass",
     value: function containsExpandedClass(target) {
       return target.classList.contains(this.expandedClass);
     }
+
+    /**
+     * Finds the element identified by a trigger's aria-controls within this root
+     * without treating the ID as a CSS selector.
+     *
+     * @param {Element} target - Trigger carrying the aria-controls attribute.
+     * @return {Element|null} Controlled element, or null when no matching ID exists.
+     */
   }, {
     key: "getControlledByID",
     value: function getControlledByID(target) {
